@@ -243,11 +243,35 @@ def index():
 
 
 def rest1():
-    # write here
+    if lookahead == F3:
+        match(F3)
+        match(ID)
+        index()
+
+    elif lookahead == WORD:
+        match(WORD)
+        match(NUM)
+
+    elif lookahead == RESW:
+        match(RESW)
+        match(NUM)
+
+    elif lookahead == RESB:
+        match(RESB)
+        match(NUM)
+
+    elif lookahead == BYTE:
+        match(BYTE)
+        Type()
 
 
 def Type():
-    # write here
+    if lookahead == HEX:
+        match(HEX)
+
+    elif lookahead == STRING:
+        match(STRING)
+    
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
