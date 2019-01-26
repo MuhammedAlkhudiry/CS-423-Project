@@ -211,66 +211,67 @@ def SIC():
 
 
 def header():
-    match(ID)
-    match(START)
-    match(NUM)
+    match("ID")
+    match("START")
+    match("NUM")
 
 
 def body():
-    if lookahead == ID:
-        match(ID)
+    if lookahead == "ID":
+        match("ID")
         rest1()
 
-    elif lookahead == F3:
-        match(F3)
-        match(ID)
-        Index()
+    elif lookahead == "F3":
+        match("F3")
+        match("ID")
+        index()
 
 
         
 
 
 def tail():
-    match(END)
-    match(ID)
+    match("END")
+    match("ID")
 
 
 
 def index():
     if lookahead == ",":
         match(",")
-        match(REG)
+        match("REG")
 
 
 def rest1():
-    if lookahead == F3:
-        match(F3)
-        match(ID)
+    if lookahead == "F3":
+        match("F3")
+        match("ID")
         index()
 
-    elif lookahead == WORD:
-        match(WORD)
-        match(NUM)
+    elif lookahead == "WORD":
+        match("WORD")
+        match("NUM")
 
-    elif lookahead == RESW:
-        match(RESW)
-        match(NUM)
+    elif lookahead == "RESW":
+        match("RESW")
+        match("NUM")
 
-    elif lookahead == RESB:
-        match(RESB)
-        match(NUM)
+    elif lookahead == "RESB":
+        match("RESB")
+        match("NUM")
 
-    elif lookahead == BYTE:
-        match(BYTE)
+    elif lookahead == "BYTE":
+        match("BYTE")
         Type()
 
 
 def Type():
-    if lookahead == HEX:
-        match(HEX)
+    pass
+    # if lookahead == HEX:
+    #     match(HEX)
 
-    elif lookahead == STRING:
-        match(STRING)
+    # elif lookahead == STRING:
+    #     match(STRING)
     
 
 def main():
