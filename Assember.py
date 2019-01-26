@@ -225,6 +225,9 @@ def body():
         match("F3")
         match("ID")
         index()
+        
+    else:
+        error('Syntax error')
 
 
         
@@ -263,6 +266,9 @@ def rest1():
     elif lookahead == "BYTE":
         match("BYTE")
         Type()
+
+    else:
+        error('Syntax error')
 
 
 def Type():
