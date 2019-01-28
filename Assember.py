@@ -212,39 +212,59 @@ def sic():
 
 
 def header():
-    global IdIndex
+    global IdIndex, startAddress
     IdIndex = tokenval
     match("ID")
     match("START")
     match("NUM")
+    startAddress = locctr = symtable[IdIndex].att = tokenval
+
+    # if pass1or2 == "2":
+    #    print header of file
 
 
 def body():
+    global inst
+
     if lookahead == "ID":
+        if pass1or2 == "2":
+            inst = 0
         match("ID")
         rest1()
         body()
 
     elif lookahead == "f3":
+        if pass1or2 == "2":
+            inst = 0
         stmt()
         body()
 
 
 def tail():
+    global totalSize
     match("END")
     match("ID")
+    totalSize = locctr - startAddress
 
 
 def stmt():
     match("f3")
+    locctr += 3
+    # if pass1or2 == "2":
+    #     inst = symtable[tokenval].
     match("ID")
+    # if pass1or2 == "2":
+    #    inst += symtable[tokenval].
     index()
+    # print instruction informaion
 
 
 def index():
     if lookahead == ",":
         match(",")
         match("REG")
+        # if pass1or2 == "2":
+        #     inst += Xbit3set
 
 
 def rest1():
@@ -254,14 +274,17 @@ def rest1():
     elif lookahead == "WORD":
         match("WORD")
         match("NUM")
+        locctr += 3
 
     elif lookahead == "RESW":
         match("RESW")
         match("NUM")
+        locctr += tokenval * 3
 
     elif lookahead == "RESB":
         match("RESB")
         match("NUM")
+        locctr += tokenval
 
     elif lookahead == "BYTE":
         match("BYTE")
@@ -275,9 +298,11 @@ def rest2():
     pass
     if lookahead == "HEX":
         match("HEX")
+        # locctr += #size of string / 2
 
     elif lookahead == "STRING":
         match("STRING")
+        # locctr += #size of string
 
 
 def main():
