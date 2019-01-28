@@ -202,16 +202,18 @@ def checkindex():
 
 
 def parse():
-    SIC()
+    sic()
 
 
-def SIC():
+def sic():
     header()
     body()
     tail()
 
 
 def header():
+    global IdIndex
+    IdIndex = tokenval
     match("ID")
     match("START")
     match("NUM")
@@ -221,19 +223,22 @@ def body():
     if lookahead == "ID":
         match("ID")
         rest1()
+        body()
 
-    elif lookahead == "F3":
-        match("F3")
-        match("ID")
-        index()
-
-    else:
-        error('Syntax error')
+    elif lookahead == "f3":
+        stmt()
+        body()
 
 
 def tail():
     match("END")
     match("ID")
+
+
+def stmt():
+    match("f3")
+    match("ID")
+    index()
 
 
 def index():
@@ -243,10 +248,8 @@ def index():
 
 
 def rest1():
-    if lookahead == "F3":
-        match("F3")
-        match("ID")
-        index()
+    if lookahead == "f3":
+        stmt()
 
     elif lookahead == "WORD":
         match("WORD")
@@ -262,13 +265,13 @@ def rest1():
 
     elif lookahead == "BYTE":
         match("BYTE")
-        Type()
+        rest2()
 
     else:
         error('Syntax error')
 
 
-def Type():
+def rest2():
     pass
     if lookahead == "HEX":
         match("HEX")
@@ -295,6 +298,8 @@ def main():
     if filecontent[len(filecontent) - 1] != '\n':
         filecontent.append('\n')
     for pass1or2 in range(1, 3):
+        global lookahead
+        lookahead = lexan()
         parse()
         bufferindex = 0
         locctr = 0

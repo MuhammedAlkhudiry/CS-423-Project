@@ -1,0 +1,6 @@
+copy    START 1000
+mystart LDA   var1
+        STA   var2
+var1    WORD  10
+var2    WORD  20
+        END   mystart
