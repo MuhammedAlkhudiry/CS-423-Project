@@ -11,6 +11,7 @@ class Entry:
 
 symtable = []
 
+
 # print(symtable[12].string + ' ' + str(symtable[12].token) + ' ' + str(symtable[12].att))
 
 
@@ -23,7 +24,7 @@ def lookup(s):
 
 def insert(s, t, a):
     symtable.append(Entry(s, t, a))
-    return symtable.__len__()-1
+    return symtable.__len__() - 1
 
 
 def init():
@@ -94,21 +95,21 @@ def lexan():
         tokenval = int(filecontent[bufferindex])
         # del filecontent[bufferindex]
         bufferindex = bufferindex + 1
-        return ('NUM')
+        return 'NUM'
     elif is_hex(filecontent[bufferindex]):
         # all number starting with 0x are considered as hex
         tokenval = int(filecontent[bufferindex][2:], 16)
         # del filecontent[bufferindex]
         bufferindex = bufferindex + 1
-        return ('NUM')
+        return 'NUM'
     elif filecontent[bufferindex] in ['+', '#', ',']:
         c = filecontent[bufferindex]
         # del filecontent[bufferindex]
         bufferindex = bufferindex + 1
-        return (c)
+        return c
     else:
         # check if there is a string or hex starting with C'string' or X'hex'
-        if (filecontent[bufferindex].upper() == 'C') and (filecontent[bufferindex+1] == '\''):
+        if (filecontent[bufferindex].upper() == 'C') and (filecontent[bufferindex + 1] == '\''):
             bytestring = ''
             bufferindex += 2
             # should we take into account the missing ' error?
@@ -143,7 +144,7 @@ def lexan():
                 # should we deal with literals?
                 p = insert(bytestring, 'STRING', bytestringvalue)
             tokenval = p
-        elif (filecontent[bufferindex].upper() == 'X') and (filecontent[bufferindex+1] == '\''):
+        elif (filecontent[bufferindex].upper() == 'X') and (filecontent[bufferindex + 1] == '\''):
             bufferindex += 2
             bytestring = filecontent[bufferindex]
             bufferindex += 2
@@ -173,12 +174,12 @@ def lexan():
             tokenval = p
             # del filecontent[bufferindex]
             bufferindex = bufferindex + 1
-        return (symtable[p].token)
+        return symtable[p].token
 
 
 def error(s):
     global lineno
-    print('line ' + str(lineno) + ': '+s)
+    print('line ' + str(lineno) + ': ' + s)
 
 
 def match(token):
@@ -201,77 +202,83 @@ def checkindex():
 
 
 def parse():
-    SIC()
+    sic()
 
 
-def SIC():
+def sic():
     header()
     body()
     tail()
 
 
 def header():
-    match(ID)
-    match(START)
-    match(NUM)
+    global IdIndex
+    IdIndex = tokenval
+    match("ID")
+    match("START")
+    match("NUM")
 
 
 def body():
-    if lookahead == ID:
-        match(ID)
+    if lookahead == "ID":
+        match("ID")
         rest1()
+        body()
 
-    elif lookahead == F3:
-        match(F3)
-        match(ID)
-        Index()
-
-
-        
+    elif lookahead == "f3":
+        stmt()
+        body()
 
 
 def tail():
-    match(END)
-    match(ID)
+    match("END")
+    match("ID")
 
+
+def stmt():
+    match("f3")
+    match("ID")
+    index()
 
 
 def index():
     if lookahead == ",":
         match(",")
-        match(REG)
+        match("REG")
 
 
 def rest1():
-    if lookahead == F3:
-        match(F3)
-        match(ID)
-        index()
+    if lookahead == "f3":
+        stmt()
 
-    elif lookahead == WORD:
-        match(WORD)
-        match(NUM)
+    elif lookahead == "WORD":
+        match("WORD")
+        match("NUM")
 
-    elif lookahead == RESW:
-        match(RESW)
-        match(NUM)
+    elif lookahead == "RESW":
+        match("RESW")
+        match("NUM")
 
-    elif lookahead == RESB:
-        match(RESB)
-        match(NUM)
+    elif lookahead == "RESB":
+        match("RESB")
+        match("NUM")
 
-    elif lookahead == BYTE:
-        match(BYTE)
-        Type()
+    elif lookahead == "BYTE":
+        match("BYTE")
+        rest2()
+
+    else:
+        error('Syntax error')
 
 
-def Type():
-    if lookahead == HEX:
-        match(HEX)
+def rest2():
+    pass
+    if lookahead == "HEX":
+        match("HEX")
 
-    elif lookahead == STRING:
-        match(STRING)
-    
+    elif lookahead == "STRING":
+        match("STRING")
+
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
@@ -288,9 +295,11 @@ def main():
         if len(filecontent) <= i:
             break
     # to be sure that the content ends with new line
-    if filecontent[len(filecontent)-1] != '\n':
+    if filecontent[len(filecontent) - 1] != '\n':
         filecontent.append('\n')
     for pass1or2 in range(1, 3):
+        global lookahead
+        lookahead = lexan()
         parse()
         bufferindex = 0
         locctr = 0
