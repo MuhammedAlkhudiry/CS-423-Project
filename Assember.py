@@ -58,6 +58,10 @@ Bbit3set = 0x4000
 Pbit3set = 0x2000
 Ebit3set = 0x1000
 
+# Our variable:
+IdIndex = 0
+startAddress = 0
+totalSize = 0
 
 def is_hex(s):
     if s[0:2].upper() == '0X':
@@ -212,12 +216,16 @@ def sic():
 
 
 def header():
-    global IdIndex
+    global IdIndex, startAddress, locctr
     IdIndex = tokenval
     match("ID")
     match("START")
     match("NUM")
+    startAddress = locctr = symtable[IdIndex].address = tokenval
 
+
+# if(pass==2)
+# {print(“H%s %06X %06X\n”, symtable[IdIndex].lexptr, tokenval, totalSize);
 
 def body():
     if lookahead == "ID":
@@ -231,8 +239,10 @@ def body():
 
 
 def tail():
+    global totalSize
     match("END")
     match("ID")
+    totalSize = locctr - startAddress
 
 
 def stmt():
