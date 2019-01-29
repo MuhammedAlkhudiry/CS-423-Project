@@ -62,6 +62,9 @@ Ebit3set = 0x1000
 IdIndex = 0
 startAddress = 0
 totalSize = 0
+stringSize = 0
+inst = 0
+
 
 def is_hex(s):
     if s[0:2].upper() == '0X':
@@ -221,27 +224,25 @@ def header():
     match("ID")
     match("START")
     match("NUM")
-    startAddress = locctr = symtable[IdIndex].att = tokenval
+    # startAddress = locctr = symtable[IdIndex].att or address? = tokenval
+    # symtable[IdIndex].address ?
+    if pass1or2 == 2:
+        pass
+        # print("H %s %06X %06X\n", symtable[IdIndex].lexptr, tokenval, totalSize)
 
-    # if pass1or2 == "2":
-    #    print header of file
-
-
-# if(pass==2)
-# {print(“H%s %06X %06X\n”, symtable[IdIndex].lexptr, tokenval, totalSize);
 
 def body():
     global inst
 
     if lookahead == "ID":
-        if pass1or2 == "2":
+        if pass1or2 == 2:
             inst = 0
         match("ID")
         rest1()
         body()
 
     elif lookahead == "f3":
-        if pass1or2 == "2":
+        if pass1or2 == 2:
             inst = 0
         stmt()
         body()
@@ -254,27 +255,8 @@ def tail():
     totalSize = locctr - startAddress
 
 
-def stmt():
-    match("f3")
-    locctr += 3
-    # if pass1or2 == "2":
-    #     inst = symtable[tokenval].
-    match("ID")
-    # if pass1or2 == "2":
-    #    inst += symtable[tokenval].
-    index()
-    # print instruction informaion
-
-
-def index():
-    if lookahead == ",":
-        match(",")
-        match("REG")
-        # if pass1or2 == "2":
-        #     inst += Xbit3set
-
-
 def rest1():
+    global locctr
     if lookahead == "f3":
         stmt()
 
@@ -301,15 +283,41 @@ def rest1():
         error('Syntax error')
 
 
+def stmt():
+    global locctr, inst
+    match("f3")
+    locctr += 3
+    if pass1or2 == 2:
+        pass
+        # inst = symtable[tokenval].formatAddress << 16
+    match("ID")
+    if pass1or2 == 2:
+        pass
+        # inst = symtable[tokenval].formatAddress
+    index()
+    # print("T %06X 03 %03X\n", locctr - 3, inst)
+
+
+def index():
+    if lookahead == ",":
+        match(",")
+        match("REG")
+        if pass1or2 == 2:
+            pass
+        #     inst += Xbit3set
+
+
 def rest2():
-    pass
+    global locctr
+
     if lookahead == "HEX":
         match("HEX")
-        # locctr += #size of string / 2
+
+        locctr += stringSize / 2
 
     elif lookahead == "STRING":
         match("STRING")
-        # locctr += #size of string
+        locctr += stringSize / 2
 
 
 def main():
