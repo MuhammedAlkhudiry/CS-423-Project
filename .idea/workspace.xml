@@ -15,60 +15,18 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Assember.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="464">
-              <caret line="243" column="15" lean-forward="true" selection-start-line="243" selection-start-column="15" selection-end-line="243" selection-end-column="15" />
+            <state relative-caret-position="231">
+              <caret line="228" selection-start-line="228" selection-end-line="228" />
               <folding>
-                <element signature="e#45#175#0" />
-                <element signature="e#99#175#0" />
                 <element signature="e#306#415#0" />
                 <element signature="e#353#401#0" />
                 <element signature="e#443#508#0" />
                 <element signature="e#527#793#0" />
                 <element signature="e#705#793#0" />
-                <element signature="e#1139#1312#0" />
-                <element signature="e#1174#1281#0" />
-                <element signature="e#1191#1229#0" />
-                <element signature="e#1332#5701#0" />
-                <element signature="e#1426#1974#0" />
-                <element signature="e#1577#1757#0" />
-                <element signature="e#1817#1942#0" />
-                <element signature="e#2026#2212#0" />
-                <element signature="e#2264#2470#0" />
-                <element signature="e#2533#2655#0" />
-                <element signature="e#2674#5701#0" />
-                <element signature="e#2853#3535#0" />
-                <element signature="e#3029#3191#0" />
-                <element signature="e#3413#3510#0" />
-                <element signature="e#3649#4331#0" />
-                <element signature="e#3825#3987#0" />
-                <element signature="e#4209#4306#0" />
-                <element signature="e#4443#5020#0" />
-                <element signature="e#4901#4995#0" />
-                <element signature="e#5047#5668#0" />
-                <element signature="e#5132#5427#0" />
-                <element signature="e#5174#5290#0" />
-                <element signature="e#5333#5427#0" />
-                <element signature="e#5462#5558#0" />
-                <element signature="e#5722#5779#0" />
-                <element signature="e#5804#5915#0" />
-                <element signature="e#5940#6168#0" />
-                <element signature="e#6012#6151#0" />
-                <element signature="e#6188#6193#0" />
-                <element signature="e#6400#6442#0" />
-                <element signature="e#6480#6501#0" />
-                <element signature="e#6567#6606#0" />
-                <element signature="e#6626#6686#0" />
-                <element signature="e#6655#6686#0" />
-                <element signature="e#6706#7074#0" />
-                <element signature="e#6782#6816#0" />
-                <element signature="e#6856#6890#0" />
-                <element signature="e#6930#6964#0" />
-                <element signature="e#7004#7033#0" />
-                <element signature="e#7094#7203#0" />
-                <element signature="e#7222#7952#0" />
-                <element signature="e#7392#7634#0" />
-                <element signature="e#7489#7567#0" />
-                <element signature="e#7812#7934#0" />
+                <element signature="e#1391#5760#0" />
+                <element signature="e#5781#5838#0" />
+                <element signature="e#5863#5974#0" />
+                <element signature="e#5999#6227#0" />
               </folding>
             </state>
           </provider>
@@ -84,6 +42,11 @@
         </entry>
       </file>
     </leaf>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>inst</find>
+    </findStrings>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -106,6 +69,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -117,7 +81,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -215,13 +178,14 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-7" y="0" width="974" height="1047" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.26495728" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32932165" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.4994641" weight="0.32932165" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.4994641" visible="true" weight="0.32932165" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.39934355" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -260,6 +224,17 @@
     <option name="LAST_COMMIT_MESSAGE" value="update." />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Assember.py</url>
+          <line>222</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
   <component name="editorHistoryManager">
     <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/pydevd.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -275,70 +250,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/input.sic">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16">
+          <caret line="1" column="18" selection-start-line="1" selection-start-column="18" selection-end-line="1" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Assember.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="464">
-          <caret line="243" column="15" lean-forward="true" selection-start-line="243" selection-start-column="15" selection-end-line="243" selection-end-column="15" />
+        <state relative-caret-position="231">
+          <caret line="228" selection-start-line="228" selection-end-line="228" />
           <folding>
-            <element signature="e#45#175#0" />
-            <element signature="e#99#175#0" />
             <element signature="e#306#415#0" />
             <element signature="e#353#401#0" />
             <element signature="e#443#508#0" />
             <element signature="e#527#793#0" />
             <element signature="e#705#793#0" />
-            <element signature="e#1139#1312#0" />
-            <element signature="e#1174#1281#0" />
-            <element signature="e#1191#1229#0" />
-            <element signature="e#1332#5701#0" />
-            <element signature="e#1426#1974#0" />
-            <element signature="e#1577#1757#0" />
-            <element signature="e#1817#1942#0" />
-            <element signature="e#2026#2212#0" />
-            <element signature="e#2264#2470#0" />
-            <element signature="e#2533#2655#0" />
-            <element signature="e#2674#5701#0" />
-            <element signature="e#2853#3535#0" />
-            <element signature="e#3029#3191#0" />
-            <element signature="e#3413#3510#0" />
-            <element signature="e#3649#4331#0" />
-            <element signature="e#3825#3987#0" />
-            <element signature="e#4209#4306#0" />
-            <element signature="e#4443#5020#0" />
-            <element signature="e#4901#4995#0" />
-            <element signature="e#5047#5668#0" />
-            <element signature="e#5132#5427#0" />
-            <element signature="e#5174#5290#0" />
-            <element signature="e#5333#5427#0" />
-            <element signature="e#5462#5558#0" />
-            <element signature="e#5722#5779#0" />
-            <element signature="e#5804#5915#0" />
-            <element signature="e#5940#6168#0" />
-            <element signature="e#6012#6151#0" />
-            <element signature="e#6188#6193#0" />
-            <element signature="e#6400#6442#0" />
-            <element signature="e#6480#6501#0" />
-            <element signature="e#6567#6606#0" />
-            <element signature="e#6626#6686#0" />
-            <element signature="e#6655#6686#0" />
-            <element signature="e#6706#7074#0" />
-            <element signature="e#6782#6816#0" />
-            <element signature="e#6856#6890#0" />
-            <element signature="e#6930#6964#0" />
-            <element signature="e#7004#7033#0" />
-            <element signature="e#7094#7203#0" />
-            <element signature="e#7222#7952#0" />
-            <element signature="e#7392#7634#0" />
-            <element signature="e#7489#7567#0" />
-            <element signature="e#7812#7934#0" />
+            <element signature="e#1391#5760#0" />
+            <element signature="e#5781#5838#0" />
+            <element signature="e#5863#5974#0" />
+            <element signature="e#5999#6227#0" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/input.sic">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="16">
-          <caret line="1" column="18" selection-start-line="1" selection-start-column="18" selection-end-line="1" selection-end-column="18" />
         </state>
       </provider>
     </entry>
