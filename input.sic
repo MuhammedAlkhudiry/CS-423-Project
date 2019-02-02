@@ -1,4 +1,4 @@
-copy    START 1000
+copy    START 0x1000
 mystart LDA   var1
         STA   var2
 var1    WORD  10
