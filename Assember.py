@@ -191,6 +191,7 @@ def error(s):
 
 def match(token):
     global lookahead
+ #   print(lookahead)
     if lookahead == token:
         lookahead = lexan()
     else:
@@ -219,16 +220,14 @@ def sic():
 
 
 def header():
-    global IdIndex, startAddress, locctr
+    global IdIndex, startAddress, locctr, totalSize
     IdIndex = tokenval
     match("ID")
     match("START")
+    startAddress = locctr = symtable[IdIndex].att = tokenval
     match("NUM")
-    # startAddress = locctr = symtable[IdIndex].att or address? = tokenval
-    # symtable[IdIndex].address ?
     if pass1or2 == 2:
-        pass
-        # print("H %s %06X %06X\n", symtable[IdIndex].lexptr, tokenval, totalSize)
+        print("H ", symtable[IdIndex].string, format(tokenval, "06X"), format(totalSize, "06x"))
 
 
 def body():
@@ -288,27 +287,25 @@ def stmt():
     match("f3")
     locctr += 3
     if pass1or2 == 2:
-        pass
-        # inst = symtable[tokenval].formatAddress << 16
+        inst = symtable[tokenval].att << 16
     match("ID")
     if pass1or2 == 2:
-        pass
-        # inst = symtable[tokenval].formatAddress
+        inst = symtable[tokenval].att
     index()
-    # print("T %06X 03 %03X\n", locctr - 3, inst)
+    print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
 
 def index():
+    global inst
     if lookahead == ",":
         match(",")
         match("REG")
         if pass1or2 == 2:
-            pass
-        #     inst += Xbit3set
+            inst += Xbit3set
 
 
 def rest2():
-    global locctr
+    global locctr, stringSize
 
     if lookahead == "HEX":
         match("HEX")
@@ -317,8 +314,10 @@ def rest2():
 
     elif lookahead == "STRING":
         match("STRING")
-        locctr += stringSize / 2
+        locctr += stringSize
 
+def todelete():
+    pass
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
