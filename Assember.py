@@ -62,7 +62,6 @@ Ebit3set = 0x1000
 IdIndex = 0
 startAddress = 0
 totalSize = 0
-stringSize = 0
 inst = 0
 
 
@@ -305,19 +304,20 @@ def index():
 
 
 def rest2():
-    global locctr, stringSize
+    global locctr
 
     if lookahead == "HEX":
+        locctr += len(symtable[tokenval].string) / 2
         match("HEX")
-
-        locctr += stringSize / 2
 
     elif lookahead == "STRING":
         match("STRING")
-        locctr += stringSize
+        locctr += len(symtable[tokenval].string)
+
 
 def todelete():
     pass
+
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
