@@ -133,7 +133,7 @@ def lexan():
                 p = insert(bytestring, 'STRING', bytestringvalue)
             tokenval = p
         # a string can start with C' or only with '
-        elif (filecontent[bufferindex] == '\''):
+        elif filecontent[bufferindex] == '\'':
             bytestring = ''
             bufferindex += 1
             # should we take into account the missing ' error?
@@ -190,7 +190,6 @@ def error(s):
 
 def match(token):
     global lookahead
- #   print(lookahead)
     if lookahead == token:
         lookahead = lexan()
     else:
@@ -219,18 +218,19 @@ def sic():
 
 
 def header():
-    global IdIndex, startAddress, locctr, totalSize
+    global IdIndex, startAddress, locctr, totalSize, pass1or2
     IdIndex = tokenval
     match("ID")
     match("START")
     startAddress = locctr = symtable[IdIndex].att = tokenval
     match("NUM")
     if pass1or2 == 2:
-        print("H ", symtable[IdIndex].string, format(tokenval, "06X"), format(totalSize, "06x"))
+        # print("H ", symtable[IdIndex].string, format(tokenval, "06X"), format(totalSize, "06x"))
+        print("H ", symtable[IdIndex].string, format(startAddress, "06X"), format(totalSize, "06x"))
 
 
 def body():
-    global inst
+    global inst, pass1or2
 
     if lookahead == "ID":
         if pass1or2 == 2:
@@ -247,14 +247,16 @@ def body():
 
 
 def tail():
-    global totalSize
+    global totalSize, locctr, startAddress
     match("END")
     match("ID")
     totalSize = locctr - startAddress
+    if pass1or2 == 2:
+        print("E ", format(startAddress, '06x'))
 
 
 def rest1():
-    global locctr
+    global locctr, inst
     if lookahead == "f3":
         stmt()
 
@@ -262,6 +264,9 @@ def rest1():
         match("WORD")
         match("NUM")
         locctr += 3
+        if pass1or2 == 2:
+            inst = symtable[tokenval].att
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "RESW":
         match("RESW")
@@ -278,24 +283,24 @@ def rest1():
         rest2()
 
     else:
-        error('Syntax error')
+        error("Syntax error")
 
 
 def stmt():
-    global locctr, inst
+    global locctr, inst, pass1or2
     match("f3")
     locctr += 3
     if pass1or2 == 2:
         inst = symtable[tokenval].att << 16
     match("ID")
     if pass1or2 == 2:
-        inst = symtable[tokenval].att
-    index()
-    print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        inst += symtable[tokenval].att
+        index()
+        print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
 
 def index():
-    global inst
+    global inst, pass1or2, Xbit3set
     if lookahead == ",":
         match(",")
         match("REG")
@@ -313,10 +318,6 @@ def rest2():
     elif lookahead == "STRING":
         match("STRING")
         locctr += len(symtable[tokenval].string)
-
-
-def todelete():
-    pass
 
 
 def main():
