@@ -265,18 +265,21 @@ def rest1():
         match("NUM")
         locctr += 3
         if pass1or2 == 2:
-            inst = symtable[tokenval].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "RESW":
         match("RESW")
         match("NUM")
         locctr += tokenval * 3
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "RESB":
         match("RESB")
         match("NUM")
         locctr += tokenval
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "BYTE":
         match("BYTE")
@@ -309,15 +312,19 @@ def index():
 
 
 def rest2():
-    global locctr
+    global locctr, inst, pass1or2
 
     if lookahead == "HEX":
         locctr += len(symtable[tokenval].string) / 2
         match("HEX")
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "STRING":
         match("STRING")
         locctr += len(symtable[tokenval].string)
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
 
 def main():
