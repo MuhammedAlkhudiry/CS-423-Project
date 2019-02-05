@@ -3,4 +3,6 @@ mystart LDA   var1
         STA   var2
 var1    WORD  10
 var2    WORD  20
+var3    RESW  5
+var4    BYTE  '123'
         END   mystart
