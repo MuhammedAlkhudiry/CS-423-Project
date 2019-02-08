@@ -63,6 +63,7 @@ IdIndex = 0
 startAddress = 0
 totalSize = 0
 inst = 0
+hexOrStrIndex = 0
 
 
 def is_hex(s):
@@ -225,9 +226,7 @@ def header():
     startAddress = locctr = symtable[IdIndex].att = tokenval
     match("NUM")
     if pass1or2 == 2:
-        # print("H ", symtable[IdIndex].string, format(tokenval, "06X"), format(totalSize, "06x"))
         print("H ", symtable[IdIndex].string, format(startAddress, "06X"), format(totalSize, "06x"))
-
 
 def body():
     global inst, pass1or2
@@ -240,8 +239,8 @@ def body():
         body()
 
     elif lookahead == "f3":
-        if pass1or2 == 2:
-            inst = 0
+        # if pass1or2 == 2:
+        # inst = 0
         stmt()
         body()
 
@@ -256,32 +255,36 @@ def tail():
 
 
 def rest1():
-    global locctr, inst
+    global locctr, inst, hexOrStrIndex
     if lookahead == "f3":
         stmt()
 
     elif lookahead == "WORD":
-        match("WORD")
-        match("NUM")
         locctr += 3
         if pass1or2 == 2:
+            inst = symtable[tokenval].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        match("WORD")
+        match("NUM")
 
     elif lookahead == "RESW":
+        locctr += tokenval * 3  # ???/
+        if pass1or2 == 2:
+            inst = symtable[tokenval].att
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("RESW")
         match("NUM")
-        locctr += tokenval * 3
-        if pass1or2 == 2:
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
     elif lookahead == "RESB":
-        match("RESB")
-        match("NUM")
         locctr += tokenval
         if pass1or2 == 2:
+            inst = symtable[tokenval].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        match("RESB")
+        match("NUM")
 
     elif lookahead == "BYTE":
+        hexOrStrIndex = tokenval
         match("BYTE")
         rest2()
 
@@ -291,15 +294,15 @@ def rest1():
 
 def stmt():
     global locctr, inst, pass1or2
-    match("f3")
-    locctr += 3
     if pass1or2 == 2:
         inst = symtable[tokenval].att << 16
-    match("ID")
-    if pass1or2 == 2:
+        locctr += 3
         inst += symtable[tokenval].att
-        index()
         print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+
+    match("f3")
+    match("ID")
+    index()
 
 
 def index():
@@ -312,19 +315,19 @@ def index():
 
 
 def rest2():
-    global locctr, inst, pass1or2
-
+    global locctr, inst, pass1or2, hexOrStrIndex
     if lookahead == "HEX":
         locctr += len(symtable[tokenval].string) / 2
+        if pass1or2 == 2:
+            inst = symtable[hexOrStrIndex].att
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("HEX")
-        if pass1or2 == 2:
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-
     elif lookahead == "STRING":
-        match("STRING")
-        locctr += len(symtable[tokenval].string)
+        locctr += len(symtable[tokenval].string) - 1
         if pass1or2 == 2:
+            inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        match("STRING")
 
 
 def main():
