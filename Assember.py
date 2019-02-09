@@ -228,6 +228,7 @@ def header():
     if pass1or2 == 2:
         print("H ", symtable[IdIndex].string, format(startAddress, "06X"), format(totalSize, "06x"))
 
+
 def body():
     global inst, pass1or2
 
@@ -239,8 +240,8 @@ def body():
         body()
 
     elif lookahead == "f3":
-        # if pass1or2 == 2:
-        # inst = 0
+        if pass1or2 == 2:
+            inst = 0
         stmt()
         body()
 
@@ -317,7 +318,7 @@ def index():
 def rest2():
     global locctr, inst, pass1or2, hexOrStrIndex
     if lookahead == "HEX":
-        locctr += len(symtable[tokenval].string) / 2
+        locctr += int(len(symtable[tokenval].string) / 2)
         if pass1or2 == 2:
             inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
