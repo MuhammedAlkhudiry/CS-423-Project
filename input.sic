@@ -5,5 +5,4 @@ var1    WORD  10
 var2    WORD  20
 var3    RESW  5
 var4    BYTE  C'123'
-var5    BYTE  X'1A3'
         END   mystart

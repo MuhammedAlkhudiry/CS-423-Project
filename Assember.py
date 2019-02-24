@@ -1,4 +1,5 @@
 import re
+
 import instfile
 
 
@@ -35,7 +36,7 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i])
 
 
-file = open('input.sic', 'r')
+file = open('input2.sic', 'r')
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -50,6 +51,8 @@ Bbit4set = 0x400000
 Pbit4set = 0x200000
 Ebit4set = 0x100000
 
+Ibit4set = 0x300000
+
 Nbitset = 2
 Ibitset = 1
 
@@ -57,6 +60,8 @@ Xbit3set = 0x8000
 Bbit3set = 0x4000
 Pbit3set = 0x2000
 Ebit3set = 0x1000
+
+Ibit3set = 0x3000
 
 # Our variable:
 IdIndex = 0
@@ -230,12 +235,13 @@ def header():
 
 
 def body():
-    global inst, pass1or2
+    global inst, pass1or2, startLine
 
     if lookahead == "ID":
         if pass1or2 == 2:
             inst = 0
         match("ID")
+        startLine = False;
         rest1()
         body()
 
@@ -256,7 +262,7 @@ def tail():
 
 
 def rest1():
-    global locctr, inst, hexOrStrIndex
+    global locctr, inst, hexOrStrIndex, startLine
     if lookahead == "f3":
         stmt()
 
@@ -266,27 +272,32 @@ def rest1():
             inst = symtable[tokenval].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("WORD")
+        startLine = False
         match("NUM")
+        startLine = True
 
     elif lookahead == "RESW":
-        locctr += tokenval * 3  # ???/
+        match("RESW")
+        startLine = False
+        locctr += tokenval * 3
         if pass1or2 == 2:
             inst = symtable[tokenval].att
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-        match("RESW")
         match("NUM")
+        startLine = True
 
     elif lookahead == "RESB":
+        match("RESB")
+        startLine = False
         locctr += tokenval
         if pass1or2 == 2:
             inst = symtable[tokenval].att
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-        match("RESB")
         match("NUM")
+        startLine = True
 
     elif lookahead == "BYTE":
         hexOrStrIndex = tokenval
         match("BYTE")
+        startLine = False
         rest2()
 
     else:
@@ -294,41 +305,70 @@ def rest1():
 
 
 def stmt():
-    global locctr, inst, pass1or2
+    global locctr, inst, pass1or2, startLine
+    locctr += 3
     if pass1or2 == 2:
         inst = symtable[tokenval].att << 16
-        locctr += 3
-        inst += symtable[tokenval].att
-        print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+    ind = tokenval
+    startLine = False
+    if lookahead == "f1":
+        match("f1")
+        #print opcode
+        # locter += 1
+        pass
+    elif lookahead == "f2":
+        # if pass 2
+        # inst = symtable[tokenval].att << 8
+        # match("f2")
+        inst += (symtable[tokenval].att << 4)
+        match("REG")
+        rest3()
+
+        pass
+    elif lookahead == "f3":
+        pass
+    elif lookahead == "+":
+        pass
 
     match("f3")
-    match("ID")
-    index()
+    if symtable[ind].string == 'RSUB':
+        pass
+    else:
+        if pass1or2 == 2:
+            inst += symtable[tokenval].att
+        match("ID")
+        index()
+    if pass1or2 == 2:
+        print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+
 
 
 def index():
-    global inst, pass1or2, Xbit3set
+    global inst, pass1or2, Xbit3set, startLine
     if lookahead == ",":
         match(",")
         match("REG")
         if pass1or2 == 2:
             inst += Xbit3set
+    startLine = True;
 
 
 def rest2():
-    global locctr, inst, pass1or2, hexOrStrIndex
+    global locctr, inst, pass1or2, hexOrStrIndex, startLine
     if lookahead == "HEX":
-        locctr += int(len(symtable[tokenval].string) / 2)
+        locctr += len(symtable[tokenval].string) / 2
         if pass1or2 == 2:
             inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("HEX")
+        startLine = True
     elif lookahead == "STRING":
         locctr += len(symtable[tokenval].string) - 1
         if pass1or2 == 2:
             inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("STRING")
+        startLine = True
 
 
 def main():
