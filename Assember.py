@@ -60,7 +60,7 @@ Ibitset = 1
 Xbit3set = 0x8000
 Bbit3set = 0x4000
 Pbit3set = 0x2000
-Ebit3set = 0x1000
+Ebit3set = 0x1000   # not needed
 
 Nbit3set = 0x20000
 Ibit3set = 0x10000
@@ -246,8 +246,8 @@ def body():
         startLine = False
         rest1()
         body()
-
-    elif "f3" or "f2" or "f1" in lookahead:
+    # if "f3", "f2", "f1" in lookahead:
+    elif lookahead == "f1" or lookahead == "f2" or lookahead == "f3":
         if pass1or2 == 2:
             inst = 0
         stmt()
@@ -258,7 +258,6 @@ def body():
             inst = 0
         stmt()
         body()
-
 
 
 def tail():
@@ -272,7 +271,8 @@ def tail():
 
 def rest1():
     global locctr, inst, hexOrStrIndex, startLine
-    if "f3" or "f2" or "f1" in lookahead:
+    # if "f3", "f2", "f1" in lookahead:
+    if lookahead == "f1" or lookahead == "f2" or lookahead == "f3":
         stmt()
 
     if lookahead == "WORD":
@@ -320,7 +320,7 @@ def stmt():
     ind = tokenval
     startLine = False
 
-    #furmila 1
+    # furmat 1
     if lookahead == "f1":
         inst = symtable[tokenval].att
         match("f1")
@@ -328,7 +328,7 @@ def stmt():
         if pass1or2 == 2:
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         locctr += 1
-    
+
     # rest3()
     elif lookahead == "f2":
         if pass1or2 == 2:
@@ -341,23 +341,29 @@ def stmt():
             match(",")
             inst += symtable[tokenval].att
             match("REG")
-            locctr +=2
+            locctr += 2
         if pass1or2 == 2:
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
-    #Format 3
+    # Format 3
     elif lookahead == "f3":
         match("f3")
-        rest4()
-        locctr +=3
+        rest4(False)
+        locctr += 3
         if pass1or2 == 2:
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
-    #format 3 extended
+    # format 4 (extended Format 3)
     elif lookahead == "+":
-        #inst += Extend
-        pass
+        inst += Ebit4set
+        match("+")
+        match("f3")
+        rest4(True)
+        locctr += 4
+        if pass1or2 == 2:
+            print("T ", format(locctr - 4, '06x'), " 04 ", format(inst, '08x'))
 
+# seprator
     if symtable[ind].string == 'RSUB':
         pass
     else:
@@ -368,8 +374,9 @@ def stmt():
     if pass1or2 == 2:
         print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
-def rest4():
-    addressMode()
+
+def rest4(extended: bool):
+    addressMode(extended)
     if lookahead == "ID":
         match("ID")
 
@@ -379,31 +386,30 @@ def rest4():
     index()
 
 
-def addressMode():
+def addressMode(extended: bool):
     global inst
     if lookahead == "@":
-        inst += Nbit3set
+        inst += Nbit3set if extended is False else Nbit4set
         match("@")
 
     elif lookahead == "#":
-        inst += Ibit3set
+        inst += Ibit3set if extended is False else Ibit4set
         match("#")
 
     elif lookahead == "=":
         match("=")
-        inst += Nbit3set
-        inst += Ibit3set
+        inst += Nbit3set if extended is False else Nbit4set
+        inst += Ibit3set if extended is False else Ibit4set
         rest2()
 
 
-
-def index():
+def index(extended: bool = False):
     global inst, pass1or2, Xbit3set, startLine
     if lookahead == ",":
         match(",")
         match("REG")
         if pass1or2 == 2:
-            inst += Xbit3set
+            inst += Xbit3set if extended is False else Xbit4set
     startLine = True
 
 
@@ -423,7 +429,7 @@ def rest2():
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("STRING")
         startLine = True
-    
+
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
