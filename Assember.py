@@ -36,7 +36,7 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i])
 
 
-file = open('input2.sic', 'r')
+file = open('input3.sic', 'r')
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -51,7 +51,8 @@ Bbit4set = 0x400000
 Pbit4set = 0x200000
 Ebit4set = 0x100000
 
-Ibit4set = 0x300000
+Nbit4set = 0x200000
+Ibit4set = 0x100000
 
 Nbitset = 2
 Ibitset = 1
@@ -61,7 +62,8 @@ Bbit3set = 0x4000
 Pbit3set = 0x2000
 Ebit3set = 0x1000
 
-Ibit3set = 0x3000
+Nbit3set = 0x20000
+Ibit3set = 0x10000
 
 # Our variable:
 IdIndex = 0
@@ -114,7 +116,7 @@ def lexan():
         # del filecontent[bufferindex]
         bufferindex = bufferindex + 1
         return 'NUM'
-    elif filecontent[bufferindex] in ['+', '#', ',']:
+    elif filecontent[bufferindex] in ['+', '#', ',', '@', '=']:
         c = filecontent[bufferindex]
         # del filecontent[bufferindex]
         bufferindex = bufferindex + 1
@@ -241,15 +243,22 @@ def body():
         if pass1or2 == 2:
             inst = 0
         match("ID")
-        startLine = False;
+        startLine = False
         rest1()
         body()
 
-    elif lookahead == "f3":
+    elif "f3" or "f2" or "f1" in lookahead:
         if pass1or2 == 2:
             inst = 0
         stmt()
         body()
+
+    elif "WORD" or "BYTE" or "RESW" or "RESB" in lookahead:
+        if pass1or2 == 2:
+            inst = 0
+        stmt()
+        body()
+
 
 
 def tail():
@@ -263,10 +272,10 @@ def tail():
 
 def rest1():
     global locctr, inst, hexOrStrIndex, startLine
-    if lookahead == "f3":
+    if "f3" or "f2" or "f1" in lookahead:
         stmt()
 
-    elif lookahead == "WORD":
+    if lookahead == "WORD":
         locctr += 3
         if pass1or2 == 2:
             inst = symtable[tokenval].att
@@ -300,46 +309,91 @@ def rest1():
         startLine = False
         rest2()
 
-    else:
-        error("Syntax error")
+    # else:
+    #     error("Syntax error")
 
 
 def stmt():
     global locctr, inst, pass1or2, startLine
-    locctr += 3
     if pass1or2 == 2:
         inst = symtable[tokenval].att << 16
     ind = tokenval
     startLine = False
+
+    #furmila 1
     if lookahead == "f1":
+        inst = symtable[tokenval].att
         match("f1")
-        #print opcode
-        # locter += 1
-        pass
+        locctr += 1
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        locctr += 1
+    
+    # rest3()
     elif lookahead == "f2":
-        # if pass 2
-        # inst = symtable[tokenval].att << 8
-        # match("f2")
-        inst += (symtable[tokenval].att << 4)
+        if pass1or2 == 2:
+            inst = symtable[tokenval].att << 8
+        match("f2")
+        if pass1or2 == 2:
+            inst += (symtable[tokenval].att << 4)
         match("REG")
-        rest3()
+        if lookahead == ",":
+            match(",")
+            inst += symtable[tokenval].att
+            match("REG")
+            locctr +=2
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
 
-        pass
+    #Format 3
     elif lookahead == "f3":
-        pass
+        match("f3")
+        rest4()
+        locctr +=3
+        if pass1or2 == 2:
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+
+    #format 3 extended
     elif lookahead == "+":
+        #inst += Extend
         pass
 
-    match("f3")
     if symtable[ind].string == 'RSUB':
         pass
     else:
         if pass1or2 == 2:
             inst += symtable[tokenval].att
-        match("ID")
+        rest1()
         index()
     if pass1or2 == 2:
         print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+
+def rest4():
+    addressMode()
+    if lookahead == "ID":
+        match("ID")
+
+    elif lookahead == "NUM":
+        match("NUM")
+
+    index()
+
+
+def addressMode():
+    global inst
+    if lookahead == "@":
+        inst += Nbit3set
+        match("@")
+
+    elif lookahead == "#":
+        inst += Ibit3set
+        match("#")
+
+    elif lookahead == "=":
+        match("=")
+        inst += Nbit3set
+        inst += Ibit3set
+        rest2()
 
 
 
@@ -350,7 +404,7 @@ def index():
         match("REG")
         if pass1or2 == 2:
             inst += Xbit3set
-    startLine = True;
+    startLine = True
 
 
 def rest2():
@@ -369,7 +423,7 @@ def rest2():
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("STRING")
         startLine = True
-
+    
 
 def main():
     global file, filecontent, locctr, pass1or2, bufferindex, lineno
