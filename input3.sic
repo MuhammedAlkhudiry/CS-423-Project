@@ -2,8 +2,10 @@ sum start 0x100
 first
     float  ff
     clear t
-    lda = c'123'
+    lda @cc
     sta zz
+    ldx #3
+    +ldch dd
     rsub
 ff word 2
 dd resw 4
