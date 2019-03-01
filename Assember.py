@@ -1,5 +1,4 @@
 import re
-
 import instfile
 
 
@@ -46,7 +45,7 @@ locctr = 0
 lookahead = ''
 startLine = True
 
-Xbit4set = 0x800000 #???
+Xbit4set = 0x800000  # ???
 # Bbit4set = 0x400000
 # Pbit4set = 0x200000
 Ebit4set = 0x10000
@@ -360,11 +359,11 @@ def stmt():
 def data():
     global locctr, inst, hexOrStrIndex, startLine
     if lookahead == "WORD":
+        match("WORD")
         locctr += 3
         if pass1or2 == 2:
-            inst = symtable[tokenval].att
+            inst = tokenval
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-        match("WORD")
         startLine = False
         match("NUM")
         startLine = True

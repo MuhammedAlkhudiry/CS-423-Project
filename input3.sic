@@ -1,11 +1,10 @@
-sum start 0x100
-first
+first start 0x100
     float  ff
     clear t
     lda @cc
     sta zz
     ldx #3
-    +ldch dd
+    +ldf dd
     rsub
 ff word 2
 dd resw 4
