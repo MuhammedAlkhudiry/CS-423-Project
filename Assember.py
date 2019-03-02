@@ -35,7 +35,7 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i])
 
 
-file = open('input3.sic', 'r')
+file = open('input4.sic', 'r')
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -138,11 +138,11 @@ def lexan():
                     bytestring += ' '
             bufferindex += 1
             bytestringvalue = "".join("%02X" % ord(c) for c in bytestring)
-            bytestring = '_' + bytestring
+            bytestring = ('_' if isLiteral is False else '__') + bytestring
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'STRING', bytestringvalue)
+                p = insert(bytestring, 'STRING', (bytestringvalue if isLiteral is False else -1))
             tokenval = p
         # a string can start with C' or only with '
         elif filecontent[bufferindex] == '\'':
@@ -156,11 +156,11 @@ def lexan():
                     bytestring += ' '
             bufferindex += 1
             bytestringvalue = "".join("%02X" % ord(c) for c in bytestring)
-            bytestring = '_' + bytestring
+            bytestring = ('_' if isLiteral is False else '__') + bytestring
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'STRING', bytestringvalue)
+                p = insert(bytestring, 'STRING', (bytestringvalue if isLiteral is False else -1))
             tokenval = p
         elif (filecontent[bufferindex].upper() == 'X') and (filecontent[bufferindex + 1] == '\''):
             bufferindex += 2
@@ -171,12 +171,26 @@ def lexan():
             bytestringvalue = bytestring
             if len(bytestringvalue) % 2 == 1:
                 bytestringvalue = '0' + bytestringvalue
-            bytestring = '_' + bytestring
+            bytestring = ('_' if isLiteral is False else '__') + bytestring
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'HEX', bytestringvalue)
+                p = insert(bytestring, 'HEX', (bytestringvalue if isLiteral is False else -1))
             tokenval = p
+        # elif (filecontent[bufferindex].upper() == 'END') and (filecontent[bufferindex].upper() == 'LTORG'):
+        #     # assign address to literals
+        #     if pass1or2 == 1:
+        #         for search in symtable:
+        #             if (search.string[:2] == '__') and (search.att == -1):
+        #                 search.att = locctr
+        #                 # update the locator
+        #                 if search.token == "STRING":
+        #                     locctr += (len(search.string) - 2)
+        #                 elif search.token == "HEX":
+        #                     locctr += (len(search.string) - 4) / 2
+        #     elif pass1or2 == 2:
+        #         # insert the data values of the literals in the object program
+        #         pass
         else:
             p = lookup(filecontent[bufferindex].upper())
             if p == -1:
@@ -431,11 +445,11 @@ def addressMode():
         inst += Ibit3set if isExtd is False else Ibit4set
         match("#")
     elif lookahead == "=":
-        match("=")
         isLiteral = True
+        match("=")
         inst += Nbit3set if isExtd is False else Nbit4set
         inst += Ibit3set if isExtd is False else Ibit4set
-        rest2()
+        # rest2()
         isLiteral = False
     else:
         inst += Nbit3set if isExtd is False else Nbit4set
