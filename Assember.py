@@ -1,5 +1,4 @@
 import re
-
 import instfile
 
 
@@ -46,10 +45,10 @@ locctr = 0
 lookahead = ''
 startLine = True
 
-Xbit4set = 0x800000
-Bbit4set = 0x400000
-Pbit4set = 0x200000
-Ebit4set = 0x100000
+Xbit4set = 0x800000  # ???
+# Bbit4set = 0x400000
+# Pbit4set = 0x200000
+Ebit4set = 0x10000
 
 Nbit4set = 0x200000
 Ibit4set = 0x100000
@@ -60,7 +59,7 @@ Ibitset = 1
 Xbit3set = 0x8000
 Bbit3set = 0x4000
 Pbit3set = 0x2000
-Ebit3set = 0x1000   # not needed
+Ebit3set = 0x1000
 
 Nbit3set = 0x20000
 Ibit3set = 0x10000
@@ -71,6 +70,11 @@ startAddress = 0
 totalSize = 0
 inst = 0
 hexOrStrIndex = 0
+isLiteral = False
+isExtd = False
+base = None
+PCrange = range(-2048, 2048)  # to 2048 not 2047 because range() is exclusive
+disp = 0
 
 
 def is_hex(s):
@@ -91,7 +95,7 @@ def lexan():
         # if filecontent == []:
         if len(filecontent) == bufferindex:
             return 'EOF'
-        elif filecontent[bufferindex] == '#':
+        elif filecontent[bufferindex] == '%':
             startLine = True
             while filecontent[bufferindex] != '\n':
                 bufferindex = bufferindex + 1
@@ -194,6 +198,7 @@ def lexan():
 def error(s):
     global lineno
     print('line ' + str(lineno) + ': ' + s)
+    exit(1)
 
 
 def match(token):
@@ -237,7 +242,7 @@ def header():
 
 
 def body():
-    global inst, pass1or2, startLine
+    global inst, pass1or2, startLine, lookahead
 
     if lookahead == "ID":
         if pass1or2 == 2:
@@ -246,14 +251,14 @@ def body():
         startLine = False
         rest1()
         body()
-    # if "f3", "f2", "f1" in lookahead:
-    elif lookahead == "f1" or lookahead == "f2" or lookahead == "f3":
+
+    elif lookahead == "f1" or lookahead == "f2" or lookahead == "f3" or lookahead == "+":
         if pass1or2 == 2:
             inst = 0
         stmt()
         body()
 
-    elif "WORD" or "BYTE" or "RESW" or "RESB" in lookahead:
+    elif lookahead == "WORD" or lookahead == "BYTE" or lookahead == "RESW" or lookahead == "RESB":
         if pass1or2 == 2:
             inst = 0
         stmt()
@@ -271,16 +276,94 @@ def tail():
 
 def rest1():
     global locctr, inst, hexOrStrIndex, startLine
-    # if "f3", "f2", "f1" in lookahead:
+
     if lookahead == "f1" or lookahead == "f2" or lookahead == "f3":
         stmt()
 
-    if lookahead == "WORD":
-        locctr += 3
+    elif lookahead == "WORD" or lookahead == "BYTE" or lookahead == "RESW" or lookahead == "RESB":
+        data()
+
+    else:
+        error("Syntax error")
+
+
+def stmt():
+    global locctr, inst, pass1or2, startLine, isExtd
+    ind = tokenval
+    startLine = False
+
+    # --------------- Format 1 ------------------------------
+    if lookahead == "f1":
         if pass1or2 == 2:
             inst = symtable[tokenval].att
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+        match("f1")
+        locctr += 1
+        if pass1or2 == 2:
+            print("T ", format(locctr - 1, '06x'), " 01 ", format(inst, '02x'))
+    # --------------- Format 1 ------------------------------
+
+    # --------------- Format 2 ------------------------------
+    elif lookahead == "f2":
+        if pass1or2 == 2:
+            inst = symtable[tokenval].att << 8
+        match("f2")
+        if pass1or2 == 2:
+            inst += (symtable[tokenval].att << 4)
+        match("REG")
+        locctr += 2
+        # rest3:
+        if lookahead == ",":
+            match(",")
+            inst += symtable[tokenval].att
+            match("REG")
+        if pass1or2 == 2:
+            print("T ", format(locctr - 2, '06x'), " 02 ", format(inst, '04x'))
+
+    # --------------- Format 2 ------------------------------
+
+    # --------------- Format 3 ------------------------------
+    elif lookahead == "f3":
+        # --------------- for RSUB --------------------------
+        if symtable[ind].string == 'RSUB':
+            match("f3")
+            locctr += 3
+        # --------------- for RSUB --------------------------
+        else:
+            if pass1or2 == 2:
+                inst = symtable[tokenval].att << 16
+            match("f3")
+            locctr += 3
+            rest4()
+            if pass1or2 == 2:
+                print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+    # --------------- Format 3 ------------------------------
+
+    # --------------- Format 4 ------------------------------
+    elif lookahead == "+":
+        isExtd = True
+        match("+")
+        if pass1or2 == 2:
+            inst = symtable[tokenval].att << 20
+            inst += Ebit4set
+        match("f3")
+        if pass1or2 == 2:
+            inst += symtable[tokenval].att
+        locctr += 4
+        rest4()
+        isExtd = False
+        if pass1or2 == 2:
+            print("T ", format(locctr - 4, '06x'), " 04 ", format(inst, '08x'))
+    # --------------- Format 4 ------------------------------
+
+
+def data():
+    global locctr, inst, hexOrStrIndex, startLine
+    if lookahead == "WORD":
         match("WORD")
+        locctr += 3
+        if pass1or2 == 2:
+            inst = tokenval
+            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         startLine = False
         match("NUM")
         startLine = True
@@ -309,122 +392,83 @@ def rest1():
         startLine = False
         rest2()
 
-    # else:
-    #     error("Syntax error")
 
-
-def stmt():
-    global locctr, inst, pass1or2, startLine
-    if pass1or2 == 2:
-        inst = symtable[tokenval].att << 16
-    ind = tokenval
-    startLine = False
-
-    # furmat 1
-    if lookahead == "f1":
-        inst = symtable[tokenval].att
-        match("f1")
-        locctr += 1
-        if pass1or2 == 2:
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-        locctr += 1
-
-    # rest3()
-    elif lookahead == "f2":
-        if pass1or2 == 2:
-            inst = symtable[tokenval].att << 8
-        match("f2")
-        if pass1or2 == 2:
-            inst += (symtable[tokenval].att << 4)
-        match("REG")
-        if lookahead == ",":
-            match(",")
-            inst += symtable[tokenval].att
-            match("REG")
-            locctr += 2
-        if pass1or2 == 2:
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-
-    # Format 3
-    elif lookahead == "f3":
-        match("f3")
-        rest4(False)
-        locctr += 3
-        if pass1or2 == 2:
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-
-    # format 4 (extended Format 3)
-    elif lookahead == "+":
-        inst += Ebit4set
-        match("+")
-        match("f3")
-        rest4(True)
-        locctr += 4
-        if pass1or2 == 2:
-            print("T ", format(locctr - 4, '06x'), " 04 ", format(inst, '08x'))
-
-# seprator
-    if symtable[ind].string == 'RSUB':
-        pass
-    else:
-        if pass1or2 == 2:
-            inst += symtable[tokenval].att
-        rest1()
-        index()
-    if pass1or2 == 2:
-        print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
-
-
-def rest4(extended: bool):
-    addressMode(extended)
+def rest4():
+    global inst, disp, PCrange
+    addressMode()
     if lookahead == "ID":
+        if pass1or2 == 2 and not isExtd:
+            TA = symtable[tokenval].att
+            PC = locctr
+            disp = TA - PC
+            if disp in PCrange:
+                inst += disp
+                inst += Pbit3set
+            elif base is not None and not isExtd:
+                disp = TA - base
+                inst += disp
+                inst += Bbit3set
+            else:
+                error("PC and base is not applicable")
+
         match("ID")
 
     elif lookahead == "NUM":
+        if pass1or2 == 2:
+            inst += tokenval
         match("NUM")
 
     index()
 
 
-def addressMode(extended: bool):
-    global inst
+def addressMode():
+    global inst, isLiteral
     if lookahead == "@":
-        inst += Nbit3set if extended is False else Nbit4set
+        inst += Nbit3set if isExtd is False else Nbit4set
         match("@")
 
     elif lookahead == "#":
-        inst += Ibit3set if extended is False else Ibit4set
+        inst += Ibit3set if isExtd is False else Ibit4set
         match("#")
-
     elif lookahead == "=":
         match("=")
-        inst += Nbit3set if extended is False else Nbit4set
-        inst += Ibit3set if extended is False else Ibit4set
+        isLiteral = True
+        inst += Nbit3set if isExtd is False else Nbit4set
+        inst += Ibit3set if isExtd is False else Ibit4set
         rest2()
+        isLiteral = False
+    else:
+        inst += Nbit3set if isExtd is False else Nbit4set
+        inst += Ibit3set if isExtd is False else Ibit4set
 
 
-def index(extended: bool = False):
+def index():
     global inst, pass1or2, Xbit3set, startLine
     if lookahead == ",":
         match(",")
         match("REG")
         if pass1or2 == 2:
-            inst += Xbit3set if extended is False else Xbit4set
+            inst += Xbit3set
     startLine = True
 
 
 def rest2():
     global locctr, inst, pass1or2, hexOrStrIndex, startLine
     if lookahead == "HEX":
-        locctr += len(symtable[tokenval].string) / 2
-        if pass1or2 == 2:
+
+        locctr += (len(symtable[tokenval].string) - 1) / 2
+        # inst += address of literal
+        if pass1or2 == 2 and not isLiteral:
             inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("HEX")
         startLine = True
+
     elif lookahead == "STRING":
+
         locctr += len(symtable[tokenval].string) - 1
-        if pass1or2 == 2:
+        # inst += address of literal
+        if pass1or2 == 2 and not isLiteral:
             inst = symtable[hexOrStrIndex].att
             print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
         match("STRING")
