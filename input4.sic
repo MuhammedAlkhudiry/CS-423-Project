@@ -1,0 +1,5 @@
+test    start 0x100
+    lda = x'0x06'
+    lda = c'abc'
+    lda = 'ab'
+end     test
