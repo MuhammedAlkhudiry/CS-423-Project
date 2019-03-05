@@ -13,9 +13,14 @@ token = ['f3', 'f3', 'f2', 'f3', 'f2', 'f3', 'f3', 'f2', 'f3', 'f3', 'f2', 'f1',
          'f2', 'f2', 'f1', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f3', 'f2', 'f2',
          'f3', 'f1', 'f3', 'f2', 'f3', 'f3']
 
-directives = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", 'A', 'X', 'L', 'B', 'S', 'T', 'F']
-dirtoken = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", 'REG', 'REG', 'REG', 'REG', 'REG', 'REG', 'REG']
-dircode = [3, 1, 3, 1, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6]
+# directives = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", 'A', 'X', 'L', 'B', 'S', 'T', 'F']
+# dirtoken = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", 'REG', 'REG', 'REG', 'REG', 'REG', 'REG', 'REG']
+# dircode = [3, 1, 3, 1, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6]
+directives = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", "EQU", "ORG", "LTORG", 'A', 'X', 'L', 'B', 'S',
+              'T', 'F']
+dirtoken = ["WORD", "BYTE", "RESW", "RESB", "START", "END", "BASE", "EQU", "ORG", "LTORG", 'REG', 'REG', 'REG', 'REG',
+            'REG', 'REG', 'REG']
+dircode = [3, 1, 3, 1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6]
 
 registers = ["A"]  # ????
 
