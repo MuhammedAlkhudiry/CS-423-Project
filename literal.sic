@@ -1,0 +1,22 @@
+first start 0x100
+xx  equ   1
+    org   260
+    lda = c'EAF'
+    lda = c'fff'
+    float  ff
+    clear t
+    lda @cc
+    sta zz
+    ldx #3
+    +ldf dd
+    rsub
+
+    LTORG
+
+    ldx = x'abc'
+    ldf = x'cba'
+ff word 2
+dd resw 4
+cc word 5
+zz resw 1
+end first
