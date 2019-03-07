@@ -3,10 +3,11 @@ import instfile
 
 
 class Entry:
-    def __init__(self, string, token, attribute):
+    def __init__(self, string, token, attribute, btybe):
         self.string = string
         self.token = token
         self.att = attribute
+        self.btybe = btybe
 
 
 symtable = []
@@ -22,20 +23,20 @@ def lookup(s):
     return -1
 
 
-def insert(s, t, a):
-    symtable.append(Entry(s, t, a))
+def insert(s, t, a, b):
+    symtable.append(Entry(s, t, a, b))
     return symtable.__len__() - 1
 
 
 def init():
     for i in range(0, instfile.inst.__len__()):
-        insert(instfile.inst[i], instfile.token[i], instfile.opcode[i])
+        insert(instfile.inst[i], instfile.token[i], instfile.opcode[i], None)
     for i in range(0, instfile.directives.__len__()):
         insert(instfile.directives[i],
-               instfile.dirtoken[i], instfile.dircode[i])
+               instfile.dirtoken[i], instfile.dircode[i], None)
 
 
-file = open('literal.sic', 'r')
+file = open('intputPB.sic', 'r')
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -45,13 +46,13 @@ locctr = 0
 lookahead = ''
 startLine = True
 
-Xbit4set = 0x80000  # ???
 # Bbit4set = 0x400000
 # Pbit4set = 0x200000
 Ebit4set = 0x100000
 
 Nbit4set = 0x2000000
 Ibit4set = 0x1000000
+Xbit4set = 0x800000
 
 Nbitset = 2
 Ibitset = 1
@@ -72,21 +73,22 @@ inst = 0
 hexOrStrIndex = 0
 
 # SIC/EX variables
-isLiteral = False
+isLiteral = False  # is HEX/STRING a literal?
 isExtd = False
-isBASE = False
-isAddressed = False  # is the literals addressed?
+isBASE = False  # Are we using the base?
+isAddressed = False  # is the literals addressed or still -1?
 base = None
 PCrange = range(-2048, 2048)  # to 2048 not 2047 because range() is exclusive
 BASErange = range(0, 4096)  # to 4096 not 4095 because range() is exclusive
 disp = 0
-literalArray = []
+literalArray = []  # saving the indices of the literal in symtable for later use
 literalIndex = 0
-literalValueASCII = []
+literalValueASCII = []  # saving the ASCII code of literal for later use
 
 # Program Blocks variables:
 locctrArray = [0, 0, 0]
 blockType = 0
+RTP = 0  # Relative To Program = sizeOfBlockTybes + Target Address (TA)
 
 
 def is_hex(s):
@@ -101,7 +103,7 @@ def is_hex(s):
 
 
 def lexan():
-    global filecontent, tokenval, lineno, bufferindex, locctr, startLine, literalValueASCII
+    global filecontent, tokenval, lineno, bufferindex, locctrArray, startLine, literalValueASCII
 
     while True:
         # if filecontent == []:
@@ -155,7 +157,7 @@ def lexan():
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'STRING', (bytestringvalue if isLiteral is False else -1))
+                p = insert(bytestring, 'STRING', (bytestringvalue if isLiteral is False else -1), blockType)
             tokenval = p
         # a string can start with C' or only with '
         elif filecontent[bufferindex] == '\'':
@@ -173,7 +175,7 @@ def lexan():
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'STRING', bytestringvalue)
+                p = insert(bytestring, 'STRING', bytestringvalue, blockType)
             tokenval = p
         elif (filecontent[bufferindex].upper() == 'X') and (filecontent[bufferindex + 1] == '\''):
             bufferindex += 2
@@ -189,20 +191,20 @@ def lexan():
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'HEX', (bytestringvalue if isLiteral is False else -1))
+                p = insert(bytestring, 'HEX', (bytestringvalue if isLiteral is False else -1), blockType)
             tokenval = p
         else:
             p = lookup(filecontent[bufferindex].upper())
             if p == -1:
                 if startLine:
                     # should we deal with case-sensitive?
-                    p = insert(filecontent[bufferindex].upper(), 'ID', locctr)
+                    p = insert(filecontent[bufferindex].upper(), 'ID', locctrArray[blockType], blockType)
                 else:
                     # forward reference
-                    p = insert(filecontent[bufferindex].upper(), 'ID', -1)
+                    p = insert(filecontent[bufferindex].upper(), 'ID', -1, blockType)
             else:
                 if (symtable[p].att == -1) and (startLine == True):
-                    symtable[p].att = locctr
+                    symtable[p].att = locctrArray[blockType]
             tokenval = p
             # del filecontent[bufferindex]
             bufferindex = bufferindex + 1
@@ -235,18 +237,18 @@ def checkindex():
 
 
 def addressLiteral():
-    global locctr, inst, literalArray, isAddressed
+    global locctrArray, inst, literalArray, isAddressed
     if not isAddressed:
 
         for i in range(0, len(literalArray)):
 
-            symtable[literalArray[i]].att = locctr
+            symtable[literalArray[i]].att = locctrArray[blockType]
 
             if symtable[literalArray[i]].token == 'STRING':
-                locctr += len(symtable[literalArray[i]].string)
+                locctrArray[blockType] += len(symtable[literalArray[i]].string)
 
             elif symtable[literalArray[i]].token == 'HEX':
-                locctr += (len(symtable[literalArray[i]].string)) // 2
+                locctrArray[blockType] += (len(symtable[literalArray[i]].string)) // 2
 
         isAddressed = True
 
@@ -262,18 +264,22 @@ def sic():
 
 
 def header():
-    global IdIndex, startAddress, locctr, totalSize, pass1or2
+    global IdIndex, startAddress, locctrArray, totalSize, pass1or2
     IdIndex = tokenval
     match("ID")
     match("START")
-    startAddress = locctr = symtable[IdIndex].att = tokenval
+    startAddress = symtable[IdIndex].att = tokenval
+    # assinging the 3 locctrs for program blocking.
+    for i in range(0, len(locctrArray)):
+        locctrArray[i] = tokenval
+
     match("NUM")
     if pass1or2 == 2:
         print("H ", symtable[IdIndex].string, format(startAddress, "06X"), format(totalSize, "06x"))
 
 
 def body():
-    global inst, pass1or2, startLine, lookahead, isBASE, literalArray, literalValueASCII, literalIndex, IdIndex, locctr
+    global inst, pass1or2, startLine, lookahead, isBASE, IdIndex
 
     if lookahead == "ID":
         if pass1or2 == 2:
@@ -290,73 +296,40 @@ def body():
         rest1()
         body()
 
-    # Special instructions..
-    elif lookahead == "BASE" or lookahead == "LTORG" or lookahead == "ORG":
-
-        # --------------- for BASE --------------------------
-        if lookahead == 'BASE':
-            match("BASE")
-            isBASE = True
-            rest4()
-
-        # --------------- for LTORG --------------------------
-        if lookahead == "LTORG":
-            addressLiteral()
-            if pass1or2 == 2:
-                for i in range(0, len(literalArray)):
-                    inst = literalValueASCII[i]
-                    print("L ", format(locctr - 1, '06x'), " 03 ", inst)
-                    if symtable[literalArray[i]].token == 'STRING':
-                        locctr += len(symtable[literalArray[i]].string)
-
-                    elif symtable[literalArray[i]].token == 'HEX':
-                        locctr += (len(symtable[literalArray[i]].string)) // 2
-            literalArray = []
-            literalValueASCII = []
-            literalIndex = 0
-            match("LTORG")
-        # --------------- for ORG --------------------------
-        if lookahead == "ORG":
-            match("ORG")
-            if lookahead == "ID":
-                if symtable[tokenval].att == -1:
-                    error("Forward reference is not allowed")
-                else:
-                    locctr = symtable[tokenval].att
-                    match("ID")
-            elif lookahead == "NUM":
-                locctr = tokenval
-                match("NUM")
-        # --------------------------------------------------
+    # is it directive? like EQU, ORG, USE
+    elif instfile.directive2dircode(lookahead) == 11:
+        if pass1or2 == 2:
+            inst = 0
+        rest1()
         body()
 
 
 def tail():
-    global totalSize, locctr, startAddress, inst, literalArray, literalValueASCII, literalIndex
+    global totalSize, locctrArray, startAddress, inst, literalArray, literalValueASCII, literalIndex
     addressLiteral()
     if pass1or2 == 2:
         for i in range(0, len(literalArray)):
             inst = literalValueASCII[i]
-            print("L ", format(locctr - 1, '06x'), " 03 ", inst)
+            print("L ", blockType, format(locctrArray[blockType] - 1, '06x'), " 03 ", inst)
 
             if symtable[literalArray[i]].token == 'STRING':
-                locctr += len(symtable[literalArray[i]].string)
+                locctrArray[blockType] += len(symtable[literalArray[i]].string)
 
             elif symtable[literalArray[i]].token == 'HEX':
-                locctr += (len(symtable[literalArray[i]].string)) // 2
+                locctrArray[blockType] += (len(symtable[literalArray[i]].string)) // 2
 
     literalArray = []
     literalValueASCII = []
     literalIndex = 0
     match("END")
     match("ID")
-    totalSize = locctr - startAddress
+    totalSize = locctrArray[blockType] - startAddress
     if pass1or2 == 2:
         print("E ", format(startAddress, '06x'))
 
 
 def rest1():
-    global locctr, inst, hexOrStrIndex, startLine
+    global locctrArray, inst, hexOrStrIndex, startLine
 
     if lookahead == "f1" or lookahead == "f2" or lookahead == "f3" or lookahead == "+":
         stmt()
@@ -364,17 +337,15 @@ def rest1():
     elif lookahead == "WORD" or lookahead == "BYTE" or lookahead == "RESW" or lookahead == "RESB":
         data()
 
-    elif lookahead == "EQU":
-        match("EQU")
-        symtable[IdIndex].att = tokenval
-        match("NUM")
+    elif instfile.directive2dircode(lookahead) == 11:
+        special()
 
     else:
-        error("Syntax error")
+        error("syntax error")
 
 
 def stmt():
-    global locctr, inst, pass1or2, startLine, isExtd, isBASE
+    global locctrArray, inst, pass1or2, startLine, isExtd, isBASE
     ind = tokenval
     startLine = False
 
@@ -383,9 +354,9 @@ def stmt():
         if pass1or2 == 2:
             inst = symtable[tokenval].att
         match("f1")
-        locctr += 1
+        locctrArray[blockType] += 1
         if pass1or2 == 2:
-            print("T ", format(locctr - 1, '06x'), " 01 ", format(inst, '02x'))
+            print("T ", blockType, format(locctrArray[blockType] - 1, '06x'), " 01 ", format(inst, '02x'))
     # --------------- Format 1 ------------------------------
 
     # --------------- Format 2 ------------------------------
@@ -396,14 +367,14 @@ def stmt():
         if pass1or2 == 2:
             inst += (symtable[tokenval].att << 4)
         match("REG")
-        locctr += 2
+        locctrArray[blockType] += 2
         # rest3:
         if lookahead == ",":
             match(",")
             inst += symtable[tokenval].att
             match("REG")
         if pass1or2 == 2:
-            print("T ", format(locctr - 2, '06x'), " 02 ", format(inst, '04x'))
+            print("T ", blockType, format(locctrArray[blockType] - 2, '06x'), " 02 ", format(inst, '04x'))
 
     # --------------- Format 2 ------------------------------
 
@@ -412,16 +383,16 @@ def stmt():
         # --------------- for RSUB --------------------------
         if symtable[ind].string == 'RSUB':
             match("f3")
-            locctr += 3
+            locctrArray[blockType] += 3
         # --------------- for RSUB --------------------------
         else:
             if pass1or2 == 2:
                 inst = symtable[tokenval].att << 16
             match("f3")
-            locctr += 3
+            locctrArray[blockType] += 3
             rest4()
             if pass1or2 == 2:
-                print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+                print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
     # --------------- Format 3 ------------------------------
 
     # --------------- Format 4 ------------------------------
@@ -434,22 +405,22 @@ def stmt():
         match("f3")
         if pass1or2 == 2:
             inst += symtable[tokenval].att
-        locctr += 4
+        locctrArray[blockType] += 4
         rest4()
         isExtd = False
         if pass1or2 == 2:
-            print("T ", format(locctr - 4, '06x'), " 04 ", format(inst, '08x'))
+            print("T ", blockType, format(locctrArray[blockType] - 4, '06x'), " 04 ", format(inst, '08x'))
     # --------------- Format 4 ------------------------------
 
 
 def data():
-    global locctr, inst, hexOrStrIndex, startLine
+    global locctrArray, inst, hexOrStrIndex, startLine
     if lookahead == "WORD":
         match("WORD")
-        locctr += 3
+        locctrArray[blockType] += 3
         if pass1or2 == 2:
             inst = tokenval
-            print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+            print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
         startLine = False
         match("NUM")
         startLine = True
@@ -457,7 +428,7 @@ def data():
     elif lookahead == "RESW":
         match("RESW")
         startLine = False
-        locctr += tokenval * 3
+        locctrArray[blockType] += tokenval * 3
         if pass1or2 == 2:
             inst = symtable[tokenval].att
         match("NUM")
@@ -466,7 +437,7 @@ def data():
     elif lookahead == "RESB":
         match("RESB")
         startLine = False
-        locctr += tokenval
+        locctrArray[blockType] += tokenval
         if pass1or2 == 2:
             inst = symtable[tokenval].att
         match("NUM")
@@ -479,21 +450,98 @@ def data():
         rest2()
 
 
-def rest4():
-    global inst, disp, PCrange, base, isLiteral, literalIndex
-    addressMode()
+def special():
+    global literalIndex, literalArray, literalValueASCII, blockType, isBASE, locctrArray, inst
 
+    # --------------- for EQU --------------------------
+    if lookahead == "EQU":
+        match("EQU")
+        symtable[IdIndex].att = tokenval
+        match("NUM")
+    # --------------- for BASE --------------------------
+    elif lookahead == 'BASE':
+        match("BASE")
+        isBASE = True
+        rest4()
+
+    # --------------- for LTORG --------------------------
+    elif lookahead == "LTORG":
+        addressLiteral()
+        if pass1or2 == 2:
+            for i in range(0, len(literalArray)):
+                inst = literalValueASCII[i]
+                print("L ", blockType, format(locctrArray[blockType] - 1, '06x'), " 03 ", inst)
+                if symtable[literalArray[i]].token == 'STRING':
+                    locctrArray[blockType] += len(symtable[literalArray[i]].string)
+
+                elif symtable[literalArray[i]].token == 'HEX':
+                    locctrArray[blockType] += (len(symtable[literalArray[i]].string)) // 2
+        literalArray = []
+        literalValueASCII = []
+        literalIndex = 0
+        match("LTORG")
+    # --------------- for ORG --------------------------
+    elif lookahead == "ORG":
+        match("ORG")
+        if lookahead == "ID":
+            if symtable[tokenval].att == -1:
+                error("Forward reference is not allowed")
+            else:
+                locctrArray[blockType] = symtable[tokenval].att
+                match("ID")
+        elif lookahead == "NUM":
+            locctrArray[blockType] = tokenval
+            match("NUM")
+    # --------------- for USE --------------------------
+    elif lookahead == "USE":
+        match("USE")
+        if lookahead == "CDATA":
+            blockType = 1
+            match("CDATA")
+        elif lookahead == "CBLKS":
+            blockType = 2
+            match("CBLKS")
+        else:
+            blockType = 0
+    # --------------------------------------------------
+    else:
+        error("syntax error")
+
+
+def rest4():
+    global inst, disp, PCrange, base, isLiteral, literalIndex, RTP
+    addressMode()
     if lookahead == "ID" or isLiteral:
 
         if pass1or2 == 2 and not isExtd:
             if lookahead == "ID" and not isLiteral:
+                # normal addressing
                 TA = symtable[tokenval].att
+                if blockType == 0 and symtable[tokenval].btybe == 1:
+                    RTP = locctrArray[0] + TA
+                elif blockType == 0 and symtable[tokenval].btybe == 2:
+                    RTP = locctrArray[0] + locctrArray[1] + TA
+
+                elif blockType == 1 and symtable[tokenval].btybe == 0:
+                    RTP = locctrArray[0] - TA
+                elif blockType == 2 and symtable[tokenval].btybe == 0:
+                    RTP = locctrArray[0] - locctrArray[1] - TA
+
+                elif blockType == 1 and symtable[tokenval].btybe == 2:
+                    RTP = locctrArray[1] + TA
+                elif blockType == 2 and symtable[tokenval].btybe == 1:
+                    RTP = locctrArray[1] - TA
+
+                else:
+                    RTP = TA
             else:
+
+                # for literal addressing.
                 TA = symtable[literalArray[literalIndex]].att
                 literalIndex = literalIndex + 1
 
-            PC = locctr
-            disp = TA - PC
+            PC = locctrArray[blockType]
+            disp = RTP - PC
             if disp in PCrange:
                 inst += disp
                 inst += Pbit3set
@@ -553,14 +601,14 @@ def index():
 
 
 def rest2():
-    global locctr, inst, pass1or2, hexOrStrIndex, startLine, literalIndex
+    global locctrArray, inst, pass1or2, hexOrStrIndex, startLine, literalIndex
     if lookahead == "HEX":
 
         if not isLiteral:
-            locctr += (len(symtable[tokenval].string)) // 2
+            locctrArray[blockType] += (len(symtable[tokenval].string)) // 2
             if pass1or2 == 2:
                 inst = symtable[hexOrStrIndex].att
-                print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+                print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
 
         match("HEX")
         startLine = True
@@ -568,16 +616,16 @@ def rest2():
     elif lookahead == "STRING":
 
         if not isLiteral:
-            locctr += len(symtable[tokenval].string)
+            locctrArray[blockType] += len(symtable[tokenval].string)
             if pass1or2 == 2:
                 inst = symtable[hexOrStrIndex].att
-                print("T ", format(locctr - 3, '06x'), " 03 ", format(inst, '06x'))
+                print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
         match("STRING")
         startLine = True
 
 
 def main():
-    global file, filecontent, locctr, pass1or2, bufferindex, lineno, lookahead, literalIndex
+    global file, filecontent, locctrArray, pass1or2, bufferindex, lineno, lookahead, literalIndex
     init()
     w = file.read()
     filecontent = re.split("([\\W])", w)
@@ -597,7 +645,7 @@ def main():
         lookahead = lexan()
         parse()
         bufferindex = 0
-        locctr = 0
+        locctrArray[blockType] = 0
         lineno = 1
         literalIndex = 0
     file.close()
