@@ -48,10 +48,10 @@ startLine = True
 Xbit4set = 0x80000  # ???
 # Bbit4set = 0x400000
 # Pbit4set = 0x200000
-Ebit4set = 0x10000
+Ebit4set = 0x100000
 
-Nbit4set = 0x200000
-Ibit4set = 0x100000
+Nbit4set = 0x2000000
+Ibit4set = 0x1000000
 
 Nbitset = 2
 Ibitset = 1
@@ -429,7 +429,7 @@ def stmt():
         isExtd = True
         match("+")
         if pass1or2 == 2:
-            inst = symtable[tokenval].att << 20
+            inst = symtable[tokenval].att << 24
             inst += Ebit4set
         match("f3")
         if pass1or2 == 2:
