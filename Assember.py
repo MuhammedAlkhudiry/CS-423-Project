@@ -89,6 +89,7 @@ literalValueASCII = []  # saving the ASCII code of literal for later use
 locctrArray = [0, 0, 0]
 blockType = 0
 RTP = 0  # Relative To Program = sizeOfBlockTybes + Target Address (TA)
+sizeOfBlocks = [0, 0, 0]
 
 
 def is_hex(s):
@@ -201,10 +202,11 @@ def lexan():
                     p = insert(filecontent[bufferindex].upper(), 'ID', locctrArray[blockType], blockType)
                 else:
                     # forward reference
-                    p = insert(filecontent[bufferindex].upper(), 'ID', -1, blockType)
+                    p = insert(filecontent[bufferindex].upper(), 'ID', -1, -1)
             else:
-                if (symtable[p].att == -1) and (startLine == True):
+                if (symtable[p].att == -1) and startLine:
                     symtable[p].att = locctrArray[blockType]
+                    symtable[p].btype = blockType
             tokenval = p
             # del filecontent[bufferindex]
             bufferindex = bufferindex + 1
@@ -321,9 +323,19 @@ def tail():
     literalArray = []
     literalValueASCII = []
     literalIndex = 0
+
     match("END")
     match("ID")
-    totalSize = locctrArray[blockType] - startAddress
+
+    # calculate the size of each block
+    sizeOfBlocks[0] = locctrArray[0] - startAddress
+    sizeOfBlocks[1] = (locctrArray[1] + sizeOfBlocks[0]) - startAddress
+    sizeOfBlocks[2] = (locctrArray[2] + sizeOfBlocks[0] + sizeOfBlocks[1]) - startAddress
+
+    # calculate the total size
+    for i in range(0, len(locctrArray)):
+        totalSize += sizeOfBlocks[i]
+
     if pass1or2 == 2:
         print("E ", format(startAddress, '06x'))
 
@@ -515,6 +527,7 @@ def rest4():
 
         if pass1or2 == 2 and not isExtd:
             if lookahead == "ID" and not isLiteral:
+
                 # normal addressing
                 TA = symtable[tokenval].att
                 if blockType == 0 and symtable[tokenval].btybe == 1:
