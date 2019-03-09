@@ -48,10 +48,10 @@ startLine = True
 Xbit4set = 0x80000  # ???
 # Bbit4set = 0x400000
 # Pbit4set = 0x200000
-Ebit4set = 0x10000
+Ebit4set = 0x100000
 
-Nbit4set = 0x200000
-Ibit4set = 0x100000
+Nbit4set = 0x2000000
+Ibit4set = 0x1000000
 
 Nbitset = 2
 Ibitset = 1
@@ -169,11 +169,11 @@ def lexan():
                     bytestring += ' '
             bufferindex += 1
             bytestringvalue = "".join("%02X" % ord(c) for c in bytestring)
-            bytestring = ('_' if isLiteral is False else '__') + bytestring
+            bytestring = '_' + bytestring
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
-                p = insert(bytestring, 'STRING', (bytestringvalue if isLiteral is False else -1))
+                p = insert(bytestring, 'STRING', bytestringvalue)
             tokenval = p
         elif (filecontent[bufferindex].upper() == 'X') and (filecontent[bufferindex + 1] == '\''):
             bufferindex += 2
@@ -185,26 +185,12 @@ def lexan():
             literalValueASCII.append(bytestringvalue)  # saving the ASCII code of literal
             if len(bytestringvalue) % 2 == 1:
                 bytestringvalue = '0' + bytestringvalue
-            bytestring = ('_' if isLiteral is False else '__') + bytestring
+            bytestring = '_' + bytestring
             p = lookup(bytestring)
             if p == -1:
                 # should we deal with literals?
                 p = insert(bytestring, 'HEX', (bytestringvalue if isLiteral is False else -1))
             tokenval = p
-        # elif (filecontent[bufferindex].upper() == 'END') and (filecontent[bufferindex].upper() == 'LTORG'):
-        #     # assign address to literals
-        #     if pass1or2 == 1:
-        #         for search in symtable:
-        #             if (search.string[:2] == '__') and (search.att == -1):
-        #                 search.att = locctr
-        #                 # update the locator
-        #                 if search.token == "STRING":
-        #                     locctr += (len(search.string) - 2)
-        #                 elif search.token == "HEX":
-        #                     locctr += (len(search.string) - 4) / 2
-        #     elif pass1or2 == 2:
-        #         # insert the data values of the literals in the object program
-        #         pass
         else:
             p = lookup(filecontent[bufferindex].upper())
             if p == -1:
@@ -443,7 +429,7 @@ def stmt():
         isExtd = True
         match("+")
         if pass1or2 == 2:
-            inst = symtable[tokenval].att << 20
+            inst = symtable[tokenval].att << 24
             inst += Ebit4set
         match("f3")
         if pass1or2 == 2:
