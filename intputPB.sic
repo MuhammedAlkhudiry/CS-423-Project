@@ -1,0 +1,26 @@
+first start 0x0
+
+    USE CDATA
+
+    float  ff
+    clear t
+    lda @cc
+
+    USE CBLKS
+
+    sta zz
+    ldx #3
+
+    USE
+
+    +ldf dd
+    ldl cc
+    rsub
+
+    USE CDATA
+
+ff word 2
+dd resw 4
+cc word 5
+zz resw 1
+end first

@@ -1,0 +1,61 @@
+copy start 0
+first stl retadr
+cloop jsub rdrec
+lda len
+comp #0
+jeq endfil
+jsub wrrec
+j cloop
+
+endfil lda = c'eof'
+sta buffer
+lda #3
+sta len
+jsub wrrec
+j @retadr
+
+use cdata
+
+retadr resw 1
+len resw 1
+
+use cblks
+buffer resb 4096
+bufend equ *
+maxlen equ 2
+
+use
+
+rdrec clear X
+clear A
+clear S
++ldt #maxlen
+rloop td input
+jeq rloop
+rd input
+compr A,S
+jeq exit
+stch buffer, x
+tixr T
+jlt rloop
+exit stx len
+rsub
+
+use cdata
+input byte x'f1'
+
+use
+
+wrrec clear x
+ldt len
+wloop td =x'05'
+jeq wloop
+ldch buffer,x
+wd = x'05'
+tixr t jlt wloop
+rsub
+
+use cdata
+ltorg
+
+end first
