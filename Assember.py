@@ -186,7 +186,7 @@ def lexan():
 
             bytestringvalue = bytestring
             if isLiteral:
-                literalValueASCII.append(bytestringvalue)   # saving the ASCII code of literal
+                literalValueASCII.append(bytestringvalue)  # saving the ASCII code of literal
             if len(bytestringvalue) % 2 == 1:
                 bytestringvalue = '0' + bytestringvalue
             bytestring = '_' + bytestring
@@ -544,6 +544,10 @@ def rest4():
     if lookahead == "ID" or isLiteral:
 
         if pass1or2 == 2 and not isExtd:
+
+            if symtable[tokenval].att == -1:
+                error("varible is not defined")
+
             if lookahead == "ID" and not isLiteral:
 
                 # normal addressing
@@ -564,14 +568,13 @@ def rest4():
             if disp in PCrange:
                 # if disp is negative, It's a special case...
                 if disp < 0:
-                    inst += Pbit3set
                     temp = hex(disp & 0xfff)
                     disp = int(temp, 16)
-                else:
-                    inst += Pbit3set
+
+                inst += Pbit3set
                 inst += disp
             elif base is not None and not isExtd:
-                base = symtable[tokenval].att
+                # base = symtable[tokenval].att
                 disp = TA - base
                 inst += disp
                 inst += Bbit3set
@@ -644,7 +647,7 @@ def rest2():
             locctrArray[blockType] += (len(symtable[tokenval].string) - 1) // 2
             if pass1or2 == 2:
                 inst = symtable[tokenval].att
-                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst)
+                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst.upper())
 
         match("HEX")
         startLine = True
@@ -655,7 +658,7 @@ def rest2():
             locctrArray[blockType] += len(symtable[tokenval].string) - 1
             if pass1or2 == 2:
                 inst = symtable[tokenval].att
-                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst)
+                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst.upper())
         match("STRING")
         startLine = True
 
