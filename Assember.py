@@ -36,7 +36,7 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i], None)
 
 
-file = open('inputfromCH4.sic', 'r')
+file = open('input.sic', 'r')
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -76,6 +76,7 @@ isLiteral = False  # is HEX/STRING a literal?
 isExtd = False
 isBASE = False  # Are we using the base?
 isAddressed = False  # is the literals addressed or still -1?
+isEQU = False
 base = None
 PCrange = range(-2048, 2048)  # to 2048 not 2047 because range() is exclusive
 BASErange = range(0, 4096)  # to 4096 not 4095 because range() is exclusive
@@ -89,6 +90,9 @@ locctrArray = [0, 0, 0]
 blockType = 0
 RTP = 0  # Relative To Program = sizeOfBlockTybes + Target Address (TA)
 sizeOfBlocks = [0, 0, 0]
+
+# expression variables:
+result = 0
 
 
 def is_hex(s):
@@ -441,15 +445,18 @@ def stmt():
 
 
 def data():
-    global locctrArray, inst, startLine
+    global locctrArray, inst, startLine, result
+
     if lookahead == "WORD":
         match("WORD")
         locctrArray[blockType] += 3
-        if pass1or2 == 2:
-            inst = tokenval
-            print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
         startLine = False
-        match("NUM")
+        expression()
+        symtable[IdIndex].att = result
+        if pass1or2 == 2:
+            inst = result
+            print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
+        result = 0
         startLine = True
 
     elif lookahead == "RESW":
@@ -472,18 +479,76 @@ def data():
         rest2()
 
 
+def expression():
+    global startLine, tokenval, lookahead, result
+
+    if lookahead == "ID":
+        if symtable[tokenval].att == -1 and isEQU:
+            error("forward reference is not allowed")
+        result += symtable[tokenval].att
+        match("ID")
+        if lookahead == "+":
+            match("+")
+            if lookahead == "ID":
+                if symtable[tokenval].att == -1 and isEQU:
+                    error("forward reference is not allowed")
+                result += symtable[tokenval].att
+                match("ID")
+            elif lookahead == "NUM":
+                result += tokenval
+                match("NUM")
+        if lookahead == "-":
+            match("-")
+            if lookahead == "ID":
+                if symtable[tokenval].att == -1 and isEQU:
+                    error("forward reference is not allowed")
+                result -= symtable[tokenval].att
+                match("ID")
+            elif lookahead == "NUM":
+                result -= tokenval
+                match("NUM")
+
+    if lookahead == "NUM":
+        result += tokenval
+        match("NUM")
+        if lookahead == "+":
+            match("+")
+            if lookahead == "ID":
+                if symtable[tokenval].att == -1 and isEQU:
+                    error("forward reference is not allowed")
+                result += symtable[tokenval].att
+                match("ID")
+            elif lookahead == "NUM":
+                result += tokenval
+                match("NUM")
+
+        if lookahead == "-":
+            match("-")
+            if lookahead == "ID":
+                if symtable[tokenval].att == -1 and isEQU:
+                    error("forward reference is not allowed")
+                result -= symtable[tokenval].att
+                match("ID")
+            elif lookahead == "NUM":
+                result -= tokenval
+                match("NUM")
+
+
 def directive():
-    global literalIndex, literalArray, literalValueASCII, blockType, isBASE, locctrArray, inst
+    global literalIndex, literalArray, isEQU, literalValueASCII, result, blockType, isBASE, locctrArray, inst
 
     # --------------- for EQU --------------------------
     if lookahead == "EQU":
         match("EQU")
+        isEQU = True
         if lookahead == "*":
             symtable[IdIndex].att = locctrArray[blockType]
             match("*")
         else:
-            symtable[IdIndex].att = tokenval
-            match("NUM")
+            expression()
+            symtable[IdIndex].att = result
+            result = 0
+        isEQU = False
     # --------------- for BASE --------------------------
     elif lookahead == 'BASE':
         match("BASE")
@@ -664,7 +729,7 @@ def rest2():
 
 
 def main():
-    global file, filecontent, locctrArray, pass1or2, bufferindex, lineno, lookahead, literalIndex, blockType
+    global file, filecontent, locctrArray, pass1or2, result, bufferindex, lineno, lookahead, literalIndex, blockType
     init()
     w = file.read()
     filecontent = re.split("([\\W])", w)
@@ -688,6 +753,7 @@ def main():
         lineno = 1
         literalIndex = 0
         blockType = 0
+        result = 0
     file.close()
 
 

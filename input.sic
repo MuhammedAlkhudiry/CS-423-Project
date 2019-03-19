@@ -1,0 +1,9 @@
+copy start 0
+
+xx word 1
+zz word yy+1
+yy word 2+1
+yy equ 5
+
+
+end first
