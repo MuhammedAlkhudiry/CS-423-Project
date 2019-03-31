@@ -1,0 +1,19 @@
+test    start 0x100
+        ldx zero
+        lda xx
+loop    comp yy
+        jeq finish
+        jgt beforeloop
+        sub yy
+        j loop
+beforeloop
+        sub yy
+        mul minus
+        j loop
+finish
+        rsub
+xx      word 10
+yy      word 20
+zero    word 0
+minus   word 1
+end     test

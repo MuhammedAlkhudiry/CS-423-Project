@@ -36,7 +36,9 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i], None)
 
 
-file = open('input.sic', 'r')
+file = open('inputfromCH4.sic', 'r')
+objectCode = open('objectCode', 'w')
+
 filecontent = []
 bufferindex = 0
 tokenval = 0
@@ -93,6 +95,11 @@ sizeOfBlocks = [0, 0, 0]
 
 # expression variables:
 result = 0
+
+# -----
+
+isObjectCode = True
+modArray = []  # for modifaction records
 
 
 def is_hex(s):
@@ -244,11 +251,15 @@ def checkindex():
 
 
 def removeDuplicates():
-    global literalArray
+    global literalArray, literalValueASCII
     newliteralArray = []
     [newliteralArray.append(x) for x in literalArray if x not in newliteralArray]
-
     literalArray = newliteralArray
+
+    newliteralArray = []
+    [newliteralArray.append(x) for x in literalValueASCII if x not in newliteralArray]
+    literalValueASCII = newliteralArray
+
 
 
 def addressLiteral():
@@ -293,6 +304,8 @@ def header():
     match("NUM")
     if pass1or2 == 2:
         print("H ", symtable[IdIndex].string, format(startAddress, "06X"), format(totalSize, "06x"))
+        objectCode.write(
+            "H " + symtable[IdIndex].string + " " + format(startAddress, "06X") + " " + format(totalSize, "06x") + '\n')
 
 
 def body():
@@ -327,7 +340,12 @@ def tail():
     if pass1or2 == 2:
         for i in range(0, len(literalArray)):
             inst = literalValueASCII[i]
-            print("L ", blockType, format(locctrArray[blockType] - 1, '06x'), " 03 ", inst)
+            if isObjectCode:
+                print("T ", format(locctrArray[blockType] - 1, '06x'), " 03 ", inst)
+            else:
+                print(inst)
+            objectCode.write(
+                "T " + format(locctrArray[blockType] - 1, '06x') + " 03 " + format(inst, '06x').upper() + '\n')
 
             if symtable[literalArray[i]].token == 'STRING':
                 locctrArray[blockType] += len(symtable[literalArray[i]].string)
@@ -352,7 +370,13 @@ def tail():
         totalSize += sizeOfBlocks[i]
 
     if pass1or2 == 2:
+        for i in range(0, len(modArray)):
+            print("M ", format(modArray[i], '06x'), "05")
+            objectCode.write("M " + format(modArray[i], '06x') + "05" + '\n')
+
+    if pass1or2 == 2:
         print("E ", format(startAddress, '06x'))
+        objectCode.write("E " + format(startAddress, '06x'))
 
 
 def rest1():
@@ -384,8 +408,13 @@ def stmt():
         match("f1")
         locctrArray[blockType] += 1
         if pass1or2 == 2:
-            print("T ", blockType, format(locctrArray[blockType] - 1, '06x').upper(), " 01 ",
-                  format(inst, '02x').upper())
+            if isObjectCode:
+                print("T ", format(locctrArray[blockType] - 1, '06x').upper(), " 01 ", format(inst, '06x').upper())
+            else:
+                print(format(inst, '02x').upper())
+            objectCode.write(
+                "T " + format(locctrArray[blockType] - 1, '06x') + " 01 " + format(inst, '02x').upper() + '\n')
+
     # --------------- Format 1 ------------------------------
 
     # --------------- Format 2 ------------------------------
@@ -403,8 +432,13 @@ def stmt():
             inst += symtable[tokenval].att
             match("REG")
         if pass1or2 == 2:
-            print("T ", blockType, format(locctrArray[blockType] - 2, '06x').upper(), " 02 ",
-                  format(inst, '04x').upper())
+            if isObjectCode:
+                print("T ", format(locctrArray[blockType] - 2, '06x').upper(), " 02 ", format(inst, '02x').upper())
+            else:
+                print(format(inst, '02x').upper())
+            objectCode.write(
+                "T " + format(locctrArray[blockType] - 2, '06x') + " 02 " + format(inst, '02x').upper() + '\n')
+
 
     # --------------- Format 2 ------------------------------
 
@@ -412,8 +446,21 @@ def stmt():
     elif lookahead == "f3":
         # --------------- for RSUB --------------------------
         if symtable[ind].string == 'RSUB':
+            if pass1or2 == 2:
+                inst = symtable[tokenval].att << 16
             match("f3")
             locctrArray[blockType] += 3
+            if pass1or2 == 2:
+                inst += Nbit3set
+                inst += Ibit3set
+                if isObjectCode:
+                    print("T ", format(locctrArray[blockType] - 3, '06x').upper(), " 03 ",
+                          format(inst, '06x').upper())
+                else:
+                    print(format(inst, '06x').upper())
+                objectCode.write(
+                    "T " + format(locctrArray[blockType] - 3, '06x') + " 03 " + format(inst, '06x').upper() + '\n')
+
         # --------------- for RSUB --------------------------
         else:
             if pass1or2 == 2:
@@ -422,8 +469,13 @@ def stmt():
             locctrArray[blockType] += 3
             rest4()
             if pass1or2 == 2:
-                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ",
-                      format(inst, '06x').upper())
+                if isObjectCode:
+                    print("T ", format(locctrArray[blockType] - 3, '06x').upper(), " 03 ",
+                          format(inst, '06x').upper())
+                else:
+                    print(format(inst, '06x').upper())
+                objectCode.write(
+                    "T " + format(locctrArray[blockType] - 3, '06x') + " 03 " + format(inst, '06x').upper() + '\n')
     # --------------- Format 3 ------------------------------
 
     # --------------- Format 4 ------------------------------
@@ -433,14 +485,23 @@ def stmt():
         if pass1or2 == 2:
             inst = symtable[tokenval].att << 24
             inst += Ebit4set
+            modArray.append(locctrArray[blockType] + 1)
         match("f3")
         if pass1or2 == 2 and lookahead != "#":
             inst += symtable[tokenval].att
+
         locctrArray[blockType] += 4
         rest4()
         isExtd = False
         if pass1or2 == 2:
-            print("T ", blockType, format(locctrArray[blockType] - 4, '06x'), " 04 ", format(inst, '08x'))
+            if isObjectCode:
+                print("T ", format(locctrArray[blockType] - 4, '06x').upper(), " 04 ",
+                      format(inst, '06x').upper())
+            else:
+                print(format(inst, '06x').upper())
+            objectCode.write(
+                "T " + format(locctrArray[blockType] - 4, '06x') + " 04 " + format(inst, '08x').upper() + '\n')
+
     # --------------- Format 4 ------------------------------
 
 
@@ -455,7 +516,12 @@ def data():
         symtable[IdIndex].att = result
         if pass1or2 == 2:
             inst = result
-            print("T ", blockType, format(locctrArray[blockType] - 3, '06x'), " 03 ", format(inst, '06x'))
+            if isObjectCode:
+                print("T ", format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", format(inst, '06x').upper())
+            else:
+                print(format(inst, '02x').upper())
+            objectCode.write(
+                "T " + format(locctrArray[blockType] - 3, '06x').upper() + " 03 " + format(inst, '06x').upper() + '\n')
         result = 0
         startLine = True
 
@@ -562,12 +628,22 @@ def directive():
             removeDuplicates()
             for i in range(0, len(literalArray)):
                 inst = literalValueASCII[i]
-                print("L ", blockType, format(locctrArray[blockType] - 1, '06x'), " 03 ", inst)
+                length = len(literalValueASCII[i]) // 2
+
                 if symtable[literalArray[i]].token == 'STRING':
-                    locctrArray[blockType] += len(symtable[literalArray[i]].string)
+                    locctrArray[blockType] += len(symtable[literalArray[i]].string) - 1
 
                 elif symtable[literalArray[i]].token == 'HEX':
-                    locctrArray[blockType] += (len(symtable[literalArray[i]].string)) // 2
+                    locctrArray[blockType] += (len(symtable[literalArray[i]].string) - 1) // 2
+
+                if isObjectCode:
+                    print("T ", format(locctrArray[blockType] - length, '06x'), "", format(length, '02d'), "", inst)
+                else:
+
+                    print(inst)
+                objectCode.write(
+                    "T " + format(locctrArray[blockType] - length, '06x') + " " + format(length, '02d') + " " + inst + '\n')
+
         literalArray = []
         literalValueASCII = []
         literalIndex = 0
@@ -712,7 +788,15 @@ def rest2():
             locctrArray[blockType] += (len(symtable[tokenval].string) - 1) // 2
             if pass1or2 == 2:
                 inst = symtable[tokenval].att
-                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst.upper())
+                length = (len(symtable[tokenval].string) - 1) // 2
+                if isObjectCode:
+                    print("T ", format(locctrArray[blockType] - length, '06x').upper(), "", format(length, '02d'), "",
+                          inst.upper())
+                else:
+                    print(inst.upper())
+                objectCode.write(
+                    "T " + format(locctrArray[blockType] - length, '06x').upper() + " " + format(length, '02d') + " " + str(
+                        inst).upper() + '\n')
 
         match("HEX")
         startLine = True
@@ -723,7 +807,16 @@ def rest2():
             locctrArray[blockType] += len(symtable[tokenval].string) - 1
             if pass1or2 == 2:
                 inst = symtable[tokenval].att
-                print("T ", blockType, format(locctrArray[blockType] - 3, '06x').upper(), " 03 ", inst.upper())
+                length = len(symtable[tokenval].string) - 1
+                if isObjectCode:
+                    print("T ", format(locctrArray[blockType] - 3, '06x').upper(), "", format(length, '02d'), "",
+                          inst.upper())
+                else:
+                    print(inst.upper())
+                objectCode.write(
+                    "T " + format(locctrArray[blockType] - 3, '06x').upper() + " " + format(length, '02d') + " " + str(
+                        inst).upper() + '\n')
+
         match("STRING")
         startLine = True
 

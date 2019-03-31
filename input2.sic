@@ -1,0 +1,12 @@
+sum start 0x100
+first
+    lda ff
+    ldx dd
+    add cc,x
+    sta zz
+    rsub
+ff word 2
+dd resw 4
+cc word 5
+zz resw 1
+end first

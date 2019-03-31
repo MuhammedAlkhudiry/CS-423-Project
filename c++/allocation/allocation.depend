@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1553870660 source:c:\users\km28\desktop\cs-423-project\c++\allocation\main.cpp
+	<iostream>
+	<stdlib.h>
+	<stdio.h>
+
