@@ -1,5 +1,5 @@
 # CS 423 Project
-Our project for CS423 course, which is a simple assembler using Python.
+Our project for CS423 course, which is a simple assembler using Python, with simple loader using C++.
 
 Names:
 <br />
