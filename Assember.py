@@ -36,7 +36,7 @@ def init():
                instfile.dirtoken[i], instfile.dircode[i], None)
 
 
-file = open('inputfromCH4.sic', 'r')
+file = open('exam.sic', 'r')
 objectCode = open('objectCode', 'w')
 
 filecontent = []
@@ -259,7 +259,6 @@ def removeDuplicates():
     newliteralArray = []
     [newliteralArray.append(x) for x in literalValueASCII if x not in newliteralArray]
     literalValueASCII = newliteralArray
-
 
 
 def addressLiteral():
@@ -535,8 +534,11 @@ def data():
     elif lookahead == "RESB":
         match("RESB")
         startLine = False
-        locctrArray[blockType] += tokenval
-        match("NUM")
+        if lookahead == "NUM":
+            locctrArray[blockType] += tokenval
+            match("NUM")
+        else:
+            rest2()
         startLine = True
 
     elif lookahead == "BYTE":
@@ -642,7 +644,8 @@ def directive():
 
                     print(inst)
                 objectCode.write(
-                    "T " + format(locctrArray[blockType] - length, '06x') + " " + format(length, '02d') + " " + inst + '\n')
+                    "T " + format(locctrArray[blockType] - length, '06x') + " " + format(length,
+                                                                                         '02d') + " " + inst + '\n')
 
         literalArray = []
         literalValueASCII = []
@@ -795,7 +798,8 @@ def rest2():
                 else:
                     print(inst.upper())
                 objectCode.write(
-                    "T " + format(locctrArray[blockType] - length, '06x').upper() + " " + format(length, '02d') + " " + str(
+                    "T " + format(locctrArray[blockType] - length, '06x').upper() + " " + format(length,
+                                                                                                 '02d') + " " + str(
                         inst).upper() + '\n')
 
         match("HEX")

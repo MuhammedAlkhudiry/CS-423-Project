@@ -1,0 +1,13 @@
+CPYS  START 100
+PS    LDX = c'abc'
+STILL LDCH STR_1, X
+
+LTORG
+      STCH STR_2, X
+      TIX  STRSIZE
+      JLT  STILL
+STR_1 byte C'Project'
+STR_2 RESB 7
+STRSIZE WORD 7
+INIT BYTE X'000001'
+      END PS
